@@ -380,14 +380,16 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:16px 0}
       <button class="btn btn-secondary btn-sm" onclick="goTo('code-screen')">تغيير</button>
     </div>
 
-    <div class="field-group">
+    <div class="field-group" style="position:relative">
       <div class="field-label">👤 اسم المنسق رباعياً <span class="field-hint">بالعربية فقط · 4 كلمات على الأقل</span></div>
-      <input class="form-input" id="f-name" type="text" placeholder="أحمد محمد علي إبراهيم" autocomplete="off">
+      <input class="form-input" id="f-name" type="text" placeholder="أحمد محمد علي إبراهيم" autocomplete="off" oninput="acName(this.value)" onblur="setTimeout(()=>hideAC('ac-name'),200)">
+      <div id="ac-name" style="display:none;position:absolute;z-index:999;width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:12px;margin-top:2px;max-height:180px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.4)"></div>
       <div class="form-error" id="err-name"></div>
     </div>
-    <div class="field-group">
+    <div class="field-group" style="position:relative">
       <div class="field-label">🪪 رقم البطاقة القومية <span class="field-hint">14 رقم بالضبط</span></div>
-      <input class="form-input" id="f-id" type="tel" placeholder="29901011234567" inputmode="numeric" dir="ltr">
+      <input class="form-input" id="f-id" type="tel" placeholder="29901011234567" inputmode="numeric" dir="ltr" autocomplete="off" oninput="acId(this.value)" onblur="setTimeout(()=>hideAC('ac-id'),200)">
+      <div id="ac-id" style="display:none;position:absolute;z-index:999;width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:12px;margin-top:2px;max-height:180px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.4)"></div>
       <div class="form-error" id="err-id"></div>
     </div>
     <div class="field-group">
@@ -1098,25 +1100,95 @@ function buildDelegation(tmpl){
 }
 
 // ─────────────────────── SAVE / PRINT ───────────────────────
+// ═══ Coordinators Autocomplete ═══
+function getCoordinators(){
+  try{ return JSON.parse(localStorage.getItem('adhoc_coordinators')||'[]'); }
+  catch{ return []; }
+}
+function saveCoordinator(name, id){
+  if(!name||!id) return;
+  const list = getCoordinators();
+  const exists = list.find(x=>x.id===id);
+  if(!exists){
+    list.unshift({name, id});
+    if(list.length>200) list.pop();
+    localStorage.setItem('adhoc_coordinators', JSON.stringify(list));
+  }
+}
+function acName(val){
+  const box = document.getElementById('ac-name');
+  if(!val || val.length < 2){ box.style.display='none'; return; }
+  const list = getCoordinators().filter(x=>x.name.includes(val));
+  if(!list.length){ box.style.display='none'; return; }
+  box.innerHTML = list.slice(0,8).map(x=>`
+    <div onclick="pickCoord('${x.name.replace(/'/g,"\\'")}','${x.id}')"
+      style="padding:12px 14px;cursor:pointer;border-bottom:1px solid var(--border);font-size:14px;display:flex;justify-content:space-between;align-items:center"
+      onmouseover="this.style.background='var(--surface)'" onmouseout="this.style.background=''">
+      <span style="font-weight:700">${x.name}</span>
+      <span style="color:var(--text2);font-size:12px;direction:ltr">${x.id}</span>
+    </div>`).join('');
+  box.style.display='block';
+}
+function acId(val){
+  const box = document.getElementById('ac-id');
+  if(!val || val.length < 3){ box.style.display='none'; return; }
+  const list = getCoordinators().filter(x=>x.id.includes(val));
+  if(!list.length){ box.style.display='none'; return; }
+  box.innerHTML = list.slice(0,8).map(x=>`
+    <div onclick="pickCoord('${x.name.replace(/'/g,"\\'")}','${x.id}')"
+      style="padding:12px 14px;cursor:pointer;border-bottom:1px solid var(--border);font-size:14px;display:flex;justify-content:space-between;align-items:center"
+      onmouseover="this.style.background='var(--surface)'" onmouseout="this.style.background=''">
+      <span style="font-weight:700;direction:ltr">${x.id}</span>
+      <span style="color:var(--text2);font-size:12px">${x.name}</span>
+    </div>`).join('');
+  box.style.display='block';
+}
+function pickCoord(name, id){
+  document.getElementById('f-name').value = name;
+  document.getElementById('f-id').value = id;
+  hideAC('ac-name'); hideAC('ac-id');
+}
+function hideAC(id){ document.getElementById(id).style.display='none'; }
+
 // ═══ Google Drive Auto-Save ═══
-const DRIVE_API_URL = 'https://script.google.com/macros/s/AKfycbwhPF_Om-4qaqTwd0AwehiIOqh85G-zanlmbhALiB2gOq34CBNes8zlcQAO50Q2rh1y0Q/exec';
+const DRIVE_API_URL = 'https://script.google.com/macros/s/AKfycbxR5yxsoKBlYb4daoUxn1psOmfgMjGrx6vWYwMb029sTRbPnLKBXnsYhBBsVc9eRxx5OQ/exec';
 
 async function saveToDrive(rec){
   try{
+    // بناء محتوى Word بنفس شكل التفويض
+    const savedState = {...state};
+    state = {...rec};
+    const tmpl = TEMPLATE_MAP[rec.chain]||'general';
+    const delegHTML = buildDelegation(tmpl);
+    state = savedState;
+
+    const wordHTML = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+    <head><meta charset="UTF-8">
+    <xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom><w:DoNotOptimizeForBrowser/></w:WordDocument></xml>
+    <style>
+    @page{margin:2cm}
+    body{font-family:'Traditional Arabic',Arial,sans-serif;direction:rtl;font-size:14pt;color:#1a1a2e}
+    .delegation-preview{font-size:14pt;line-height:1.8}
+    .prev-company{font-size:12pt;text-align:center;color:#555;margin-bottom:10pt}
+    .prev-title{font-size:18pt;font-weight:bold;text-align:center;margin-bottom:4pt}
+    .prev-line{border-bottom:2pt solid #1a1a2e;margin-bottom:12pt}
+    .prev-field{display:flex;gap:8pt;margin-bottom:6pt;font-weight:bold}
+    .prev-key{color:#444;min-width:130pt}
+    .prev-val{font-weight:bold}
+    .prev-para{margin:8pt 0;line-height:1.8}
+    .prev-sigs{display:flex;justify-content:space-around;margin-top:40pt}
+    .prev-sig{text-align:center;font-weight:bold;font-size:12pt}
+    .prev-sig-line{width:100pt;border-bottom:1pt solid #1a1a2e;margin:0 auto 8pt;height:36pt}
+    </style></head><body>${delegHTML}</body></html>`;
+
     const payload = {
       id: rec.id,
       name: rec.name || '',
       chain: rec.chain || '',
       branch: rec.branch || '',
-      nationalId: rec.nationalId || '',
-      phone: rec.phone || '',
-      products: Array.isArray(rec.products) ? rec.products.join(', ') : (rec.products||''),
-      from: rec.from || '',
-      to: rec.to || '',
-      createdBy: rec.createdBy || '',
-      createdByName: rec.createdByName || '',
-      createdAt: rec.createdAt || new Date().toISOString(),
-      date: new Date().toISOString().split('T')[0]
+      date: new Date().toISOString().split('T')[0],
+      wordContent: wordHTML,
+      fileType: 'word'
     };
     const res = await fetch(DRIVE_API_URL, {
       method:'POST',
@@ -1146,7 +1218,9 @@ function saveRecord(rec){
   if(historyData.length>500) historyData=historyData.slice(0,500);
   localStorage.setItem('adhoc_history',JSON.stringify(historyData));
   updateStats();
-  // حفظ تلقائي على Google Drive
+  // حفظ المنسق في قائمة الـ Autocomplete
+  saveCoordinator(rec.name||'', rec.nationalId||rec.id||'');
+  // حفظ تلقائي على Google Drive بصيغة Word
   saveToDrive(rec);
 }
 function printAndSave(){
