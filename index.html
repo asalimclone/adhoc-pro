@@ -718,6 +718,28 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:16px 0}
   </div>
 </div>
 
+<!-- Edit User Modal -->
+<div class="modal-overlay" id="edit-user-modal">
+  <div class="modal">
+    <div class="modal-title">✏️ تعديل مستخدم <span id="edit-username-display" style="color:var(--accent);font-size:14px"></span></div>
+    <input type="hidden" id="edit-user-key">
+    <div class="field-group"><div class="field-label">كلمة المرور الجديدة</div><input class="form-input" id="edit-password" type="text" dir="ltr"></div>
+    <div class="field-group"><div class="field-label">الاسم الظاهر</div><input class="form-input" id="edit-displayname" type="text"></div>
+    <div class="field-group">
+      <div class="field-label">الصلاحية</div>
+      <select class="form-input" id="edit-role">
+        <option value="user">مستخدم عادي</option>
+        <option value="admin">مدير (Admin)</option>
+      </select>
+    </div>
+    <div class="modal-actions" style="flex-wrap:wrap;gap:8px">
+      <button class="btn btn-secondary" onclick="closeModal('edit-user-modal')" style="flex:1">إلغاء</button>
+      <button class="btn btn-danger" onclick="deleteUser(document.getElementById('edit-user-key').value)" style="flex:1">🗑️ حذف</button>
+      <button class="btn btn-primary" onclick="saveEditUser()" style="flex:1">💾 حفظ</button>
+    </div>
+  </div>
+</div>
+
 <!-- FILE INPUT (hidden) -->
 <input type="file" id="import-file" accept=".json" style="display:none" onchange="handleImport(event)">
 
@@ -741,7 +763,21 @@ const STORE_CODES = {"201":{"chain":"ايه مارت","branch":"ايه مارت"
 // ─────────────────────── AUTH ───────────────────────
 let USERS = JSON.parse(localStorage.getItem('adhoc_users') || 'null') || [
   {username:'asalim',password:'101986',displayName:'Ahmed Salim',role:'admin',active:true},
-  {username:'user1',password:'1234',displayName:'مستخدم عام',role:'user',active:true}
+  {username:'adh1',password:'1111',displayName:'adh1',role:'user',active:true},
+  {username:'adh2',password:'2222',displayName:'adh2',role:'user',active:true},
+  {username:'adh3',password:'3333',displayName:'adh3',role:'user',active:true},
+  {username:'adh4',password:'4444',displayName:'adh4',role:'user',active:true},
+  {username:'adh5',password:'5555',displayName:'adh5',role:'user',active:true},
+  {username:'adh6',password:'6666',displayName:'adh6',role:'user',active:true},
+  {username:'adh7',password:'7777',displayName:'adh7',role:'user',active:true},
+  {username:'adh8',password:'8888',displayName:'adh8',role:'user',active:true},
+  {username:'adh9',password:'9999',displayName:'adh9',role:'user',active:true},
+  {username:'adh10',password:'1010',displayName:'adh10',role:'user',active:true},
+  {username:'adh11',password:'1111',displayName:'adh11',role:'user',active:true},
+  {username:'adh12',password:'1212',displayName:'adh12',role:'user',active:true},
+  {username:'adh13',password:'1313',displayName:'adh13',role:'user',active:true},
+  {username:'adh14',password:'1414',displayName:'adh14',role:'user',active:true},
+  {username:'adh15',password:'1515',displayName:'adh15',role:'user',active:true}
 ];
 
 let currentUser = null;
@@ -1259,12 +1295,42 @@ function renderUsers(){
     <div class="admin-item">
       <div>
         <div class="admin-item-text">${u.displayName} <span style="color:var(--accent);font-size:12px">${u.role==='admin'?'(مدير)':''}</span></div>
-        <div class="admin-item-sub">@${u.username}</div>
+        <div class="admin-item-sub">@${u.username} | 🔑 ${u.password}</div>
       </div>
-      <div style="display:flex;gap:8px;align-items:center">
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="btn btn-secondary btn-sm" onclick="openEditUser('${u.username}')" style="padding:4px 10px;font-size:12px">✏️</button>
         <button class="toggle ${u.active?'on':''}" onclick="toggleUser('${u.username}')"></button>
       </div>
     </div>`).join('');
+}
+function openEditUser(username){
+  const u=USERS.find(x=>x.username===username);
+  if(!u)return;
+  document.getElementById('edit-username-display').textContent='@'+u.username;
+  document.getElementById('edit-user-key').value=u.username;
+  document.getElementById('edit-password').value=u.password;
+  document.getElementById('edit-displayname').value=u.displayName;
+  document.getElementById('edit-role').value=u.role;
+  openModal('edit-user-modal');
+}
+function saveEditUser(){
+  const key=document.getElementById('edit-user-key').value;
+  const u=USERS.find(x=>x.username===key);
+  if(!u)return;
+  const newPass=document.getElementById('edit-password').value.trim();
+  const newName=document.getElementById('edit-displayname').value.trim();
+  const newRole=document.getElementById('edit-role').value;
+  if(!newPass||!newName){toast('⚠️ أكمل جميع الحقول');return}
+  u.password=newPass;
+  u.displayName=newName;
+  u.role=newRole;
+  saveUsers();renderUsers();closeModal('edit-user-modal');toast('✅ تم تعديل المستخدم');
+}
+function deleteUser(username){
+  if(username===currentUser.username){toast('⚠️ لا يمكن حذف حسابك الحالي');return}
+  if(!confirm('هل تريد حذف المستخدم @'+username+'؟'))return;
+  USERS=USERS.filter(x=>x.username!==username);
+  saveUsers();renderUsers();closeModal('edit-user-modal');toast('✅ تم حذف المستخدم');
 }
 function toggleUser(username){
   if(username===currentUser.username){toast('⚠️ لا يمكن تعطيل حسابك الحالي');return}
