@@ -1,0 +1,1976 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#0d0d0d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ADHOC Pro">
+<title>ADHOC Delegations Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0d0d0d;
+  --surface:#161616;
+  --surface2:#1f1f1f;
+  --surface3:#2a2a2a;
+  --border:#2e2e2e;
+  --text:#f0f0f0;
+  --text2:#888;
+  --text3:#555;
+  --accent:#ff6b35;
+  --accent2:#ff4081;
+  --grad:linear-gradient(135deg,#ff6b35,#ff4081);
+  --grad-soft:linear-gradient(135deg,rgba(255,107,53,.15),rgba(255,64,129,.15));
+  --success:#22c55e;
+  --danger:#ef4444;
+  --warn:#f59e0b;
+  --info:#3b82f6;
+  --radius:14px;
+  --font:'Cairo',sans-serif;
+  --shadow:0 8px 32px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);overflow:hidden}
+
+/* ── SCREEN SYSTEM ── */
+.screen{position:fixed;inset:0;display:flex;flex-direction:column;overflow:hidden;transition:transform .3s cubic-bezier(.4,0,.2,1),opacity .3s;z-index:1}
+.screen.hidden{transform:translateX(110%);opacity:0;pointer-events:none}
+.screen.slide-back{transform:translateX(-30%);opacity:0;pointer-events:none}
+
+/* ── TOP BAR ── */
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 18px;display:flex;align-items:center;gap:12px;flex-shrink:0;padding-top:max(14px,env(safe-area-inset-top))}
+.topbar-title{font-size:17px;font-weight:700;flex:1}
+.topbar-sub{font-size:11px;color:var(--text2);margin-top:1px}
+.back-btn,.icon-btn{width:36px;height:36px;background:var(--surface2);border:none;border-radius:10px;color:var(--text);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s}
+.icon-btn:hover,.back-btn:hover{background:var(--surface3)}
+
+/* ── SCROLL ── */
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px}
+
+/* ── GRADIENT HEADER ── */
+.grad-header{background:var(--grad);padding:22px 20px 18px;position:relative;overflow:hidden;flex-shrink:0}
+.grad-header::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23fff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
+.grad-header-content{position:relative;z-index:1}
+.grad-logo{font-size:28px;font-weight:900;letter-spacing:-1px;color:white}
+.grad-sub{font-size:12px;color:rgba(255,255,255,.8);margin-top:2px}
+
+/* ── LOGIN ── */
+#login-screen{background:var(--bg);justify-content:center}
+.login-card{margin:24px;background:var(--surface);border-radius:24px;padding:32px 24px;border:1px solid var(--border)}
+.login-logo{text-align:center;margin-bottom:28px}
+.login-logo-icon{width:80px;height:80px;background:var(--grad);border-radius:22px;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:38px;box-shadow:0 8px 32px rgba(255,107,53,.4)}
+.login-title{font-size:22px;font-weight:900;margin-bottom:4px;text-align:center}
+.login-sub{color:var(--text2);font-size:13px;text-align:center}
+.form-group{margin-bottom:16px}
+.form-label{font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.form-input{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;padding:13px 16px;color:var(--text);font-family:var(--font);font-size:15px;outline:none;transition:border-color .2s}
+.form-input:focus{border-color:var(--accent)}
+.form-input.error{border-color:var(--danger)}
+.form-error{font-size:12px;color:var(--danger);margin-top:5px;display:none}
+.form-error.show{display:block}
+
+/* ── BUTTONS ── */
+.btn{width:100%;padding:15px;border:none;border-radius:14px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;transition:transform .15s,opacity .15s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--grad);color:white;box-shadow:0 4px 20px rgba(255,107,53,.4)}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.btn-success{background:linear-gradient(135deg,#059669,#22c55e);color:white}
+.btn-danger{background:linear-gradient(135deg,#b91c1c,#ef4444);color:white}
+.btn-sm{padding:8px 14px;font-size:13px;width:auto;border-radius:10px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* ── HOME ── */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 10px;text-align:center}
+.stat-num{font-size:22px;font-weight:900;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.stat-label{font-size:10px;color:var(--text2);margin-top:2px}
+.menu-grid{display:flex;flex-direction:column;gap:10px}
+.menu-btn{display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;cursor:pointer;transition:all .15s;width:100%;text-align:right}
+.menu-btn:active{background:var(--surface2);border-color:var(--accent)}
+.menu-icon{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.menu-icon.orange{background:rgba(255,107,53,.15)}
+.menu-icon.pink{background:rgba(255,64,129,.15)}
+.menu-icon.blue{background:rgba(59,130,246,.15)}
+.menu-icon.green{background:rgba(34,197,94,.15)}
+.menu-text{flex:1}
+.menu-title{font-size:15px;font-weight:700}
+.menu-sub{font-size:12px;color:var(--text2);margin-top:2px}
+.menu-arrow{color:var(--text3);font-size:18px}
+
+/* ── LIST ITEMS ── */
+.search-bar{padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0}
+.search-input{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;padding:11px 16px;color:var(--text);font-family:var(--font);font-size:14px;outline:none;transition:border-color .2s}
+.search-input:focus{border-color:var(--accent)}
+.list-item{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:13px 14px;margin-bottom:8px;cursor:pointer;transition:all .15s}
+.list-item:active{background:var(--surface2);border-color:var(--accent)}
+.list-icon{width:40px;height:40px;background:var(--surface2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.list-name{font-size:14px;font-weight:600;flex:1}
+.list-sub{font-size:11px;color:var(--text2);margin-top:2px}
+.list-arrow{color:var(--text3)}
+.badge{background:var(--grad);color:white;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px}
+.empty{text-align:center;padding:60px 20px;color:var(--text2)}
+.empty-icon{font-size:52px;margin-bottom:12px}
+
+/* ── PROGRESS ── */
+.progress-bar{display:flex;gap:4px;padding:10px 16px 0;flex-shrink:0}
+.prog-step{flex:1;height:3px;background:var(--border);border-radius:2px;transition:background .3s}
+.prog-step.done{background:var(--success)}
+.prog-step.active{background:var(--accent)}
+
+/* ── FORM ── */
+.field-group{margin-bottom:18px}
+.field-label{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:7px;display:flex;align-items:center;justify-content:space-between}
+.field-hint{font-size:11px;color:var(--text3)}
+.selected-badge{background:var(--grad-soft);border:1.5px solid var(--accent);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px}
+.selected-dot{width:8px;height:8px;background:var(--accent);border-radius:50%;flex-shrink:0}
+.selected-val{font-size:13px;font-weight:700;color:var(--accent);flex:1}
+
+/* ── CODE BOX ── */
+.code-result{background:var(--grad-soft);border:1px solid var(--accent);border-radius:12px;padding:14px;margin-bottom:16px;display:none}
+.code-result.show{display:block}
+.code-chain{font-size:16px;font-weight:700;color:var(--accent)}
+.code-branch{font-size:13px;color:var(--text2);margin-top:2px}
+
+/* ── PREVIEW ── */
+.delegation-preview{background:white;color:#1a1a2e;border-radius:var(--radius);padding:24px;margin-bottom:16px;direction:rtl;font-size:13px;line-height:1.9}
+.prev-company{font-size:13px;text-align:center;color:#555;margin-bottom:16px}
+.prev-title{font-size:20px;font-weight:900;text-align:center;margin-bottom:4px;color:#1a1a2e}
+.prev-line{border-bottom:2px solid #1a1a2e;margin-bottom:14px}
+.prev-field{display:flex;gap:8px;margin-bottom:7px}
+.prev-key{color:#666;min-width:130px;font-weight:600;flex-shrink:0}
+.prev-val{font-weight:700;color:#1a1a2e}
+.prev-para{margin:10px 0;line-height:1.8}
+.prev-sigs{display:flex;justify-content:space-between;align-items:flex-end;margin-top:40px;gap:20px;flex-wrap:nowrap}
+.prev-sig{text-align:center;font-weight:700;font-size:12px;color:#1a1a2e;flex:1}
+.prev-sig-line{width:100px;border-bottom:1.5px solid #1a1a2e;margin:0 auto 8px;height:36px}
+
+/* ── ACTION BAR ── */
+.action-bar{padding:12px 16px;border-top:1px solid var(--border);background:var(--surface);flex-shrink:0;padding-bottom:max(12px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:8px}
+
+/* ── HISTORY ── */
+.history-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px}
+.history-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+.history-name{font-size:15px;font-weight:700}
+.history-date{font-size:11px;color:var(--text2)}
+.history-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.chip{font-size:11px;padding:3px 10px;border-radius:20px;background:var(--surface2);color:var(--text2);border:1px solid var(--border)}
+.chip.active{background:rgba(34,197,94,.1);color:var(--success);border-color:var(--success)}
+.chip.expired{background:rgba(239,68,68,.1);color:var(--danger);border-color:var(--danger)}
+.chip.soon{background:rgba(245,158,11,.1);color:var(--warn);border-color:var(--warn)}
+.history-actions{display:flex;gap:8px;margin-top:10px}
+
+/* ── ANALYTICS ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+.kpi-num{font-size:28px;font-weight:900}
+.kpi-num.orange{color:var(--accent)}
+.kpi-num.green{color:var(--success)}
+.kpi-num.red{color:var(--danger)}
+.kpi-num.yellow{color:var(--warn)}
+.kpi-label{font-size:12px;color:var(--text2);margin-top:2px}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+.chart-title{font-size:14px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.chart-wrap{position:relative;height:200px}
+
+/* ── ADMIN ── */
+.admin-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;overflow:hidden}
+.admin-section-header{padding:14px 16px;font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border);background:var(--surface2)}
+.admin-item{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)}
+.admin-item:last-child{border-bottom:none}
+.admin-item-text{font-size:14px}
+.admin-item-sub{font-size:12px;color:var(--text2)}
+.toggle{width:46px;height:26px;background:var(--border);border-radius:13px;cursor:pointer;position:relative;transition:background .2s;border:none;flex-shrink:0}
+.toggle::after{content:'';position:absolute;width:20px;height:20px;background:white;border-radius:50%;top:3px;right:3px;transition:right .2s}
+.toggle.on{background:var(--grad)}
+.toggle.on::after{right:23px}
+
+/* ── SHARE MENU ── */
+.share-menu{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .25s}
+.share-menu.open{opacity:1;pointer-events:all}
+.share-sheet{background:var(--surface);border-radius:24px 24px 0 0;padding:16px;width:100%;transform:translateY(100%);transition:transform .3s;padding-bottom:max(16px,env(safe-area-inset-bottom))}
+.share-menu.open .share-sheet{transform:translateY(0)}
+.share-title{font-size:15px;font-weight:700;text-align:center;margin-bottom:16px}
+.share-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.share-btn{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;background:var(--surface2);border-radius:14px;padding:14px 8px;border:none;color:var(--text)}
+.share-btn-icon{font-size:24px}
+.share-btn-label{font-size:11px;font-weight:600}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(20px);background:#1e293b;color:white;padding:12px 24px;border-radius:30px;font-size:13px;font-weight:600;opacity:0;transition:all .3s;z-index:9999;border:1px solid var(--border);pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── USER BADGE ── */
+.user-badge{display:flex;align-items:center;gap:10px;background:var(--surface2);border-radius:12px;padding:10px 14px;margin-bottom:16px;border:1px solid var(--border)}
+.user-avatar{width:36px;height:36px;background:var(--grad);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:white;flex-shrink:0}
+.user-name{font-size:14px;font-weight:700}
+.user-role{font-size:11px;color:var(--accent)}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .25s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--surface);border-radius:20px;padding:24px;width:100%;max-width:400px;border:1px solid var(--border)}
+.modal-title{font-size:17px;font-weight:700;margin-bottom:16px}
+.modal-actions{display:flex;gap:10px;margin-top:20px}
+.modal-actions .btn{flex:1}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+/* ── HR ── */
+hr.divider{border:none;border-top:1px solid var(--border);margin:16px 0}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  LOGIN                                                  -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="screen" id="login-screen">
+  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-icon" style="background:#1a1a2e;padding:8px"><img src="data:image/png;base64,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" style="width:60px;height:60px;object-fit:contain;border-radius:8px"></div>
+      <div class="login-title">ADHOC</div>
+      <div class="login-sub">Delegations Pro · نظام التفويضات</div>
+    </div>
+    <div class="form-group">
+      <div class="form-label">👤 اسم المستخدم</div>
+      <input class="form-input" id="login-user" type="text" placeholder="user" autocomplete="username" dir="ltr">
+    </div>
+    <div class="form-group">
+      <div class="form-label">🔑 كلمة المرور</div>
+      <input class="form-input" id="login-pass" type="password" placeholder="••••••" autocomplete="current-password" dir="ltr">
+      <div class="form-error" id="login-err">❌ اسم المستخدم أو كلمة المرور غير صحيحة</div>
+    </div>
+    <button class="btn btn-primary" onclick="doLogin()">دخول ←</button>
+  </div>
+  <div style="text-align:center;padding:12px;color:var(--text2);font-size:12px">Asalim-Adhoc-2026©</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  HOME                                                   -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="screen hidden" id="home-screen">
+  <div class="grad-header">
+    <div class="grad-header-content">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:10px">
+          <img src="data:image/png;base64,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" style="width:40px;height:40px;object-fit:contain;border-radius:8px;background:white;padding:3px">
+          <div>
+            <div class="grad-logo">ADHOC</div>
+            <div class="grad-sub">نظام إدارة التفويضات الاحترافي</div>
+          </div>
+        </div>
+        <button class="icon-btn" onclick="logout()" style="background:rgba(255,255,255,.15);color:white" title="خروج">🚪</button>
+      </div>
+    </div>
+  </div>
+  <div class="scroll">
+    <div id="home-user-badge"></div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-num" id="s-today">0</div><div class="stat-label">اليوم</div></div>
+      <div class="stat-card"><div class="stat-num" id="s-month">0</div><div class="stat-label">الشهر</div></div>
+      <div class="stat-card"><div class="stat-num" id="s-total">0</div><div class="stat-label">الإجمالي</div></div>
+    </div>
+    <div class="menu-grid">
+      <button class="menu-btn" onclick="startNew()">
+        <div class="menu-icon orange">➕</div>
+        <div class="menu-text"><div class="menu-title">إنشاء تفويض جديد</div><div class="menu-sub">إدخال بيانات المنسق وتوليد التفويض</div></div>
+        <span class="menu-arrow">←</span>
+      </button>
+      <button class="menu-btn" onclick="goTo('history-screen')">
+        <div class="menu-icon pink">📂</div>
+        <div class="menu-text"><div class="menu-title">التفويضات السابقة</div><div class="menu-sub">عرض، طباعة، ومشاركة التفويضات</div></div>
+        <span class="menu-arrow">←</span>
+      </button>
+      <button class="menu-btn" onclick="goTo('analytics-screen')" id="analytics-btn">
+        <div class="menu-icon blue">📊</div>
+        <div class="menu-text"><div class="menu-title">لوحة الإحصاءات</div><div class="menu-sub">تحليلات ومؤشرات الأداء</div></div>
+        <span class="menu-arrow">←</span>
+      </button>
+      <button class="menu-btn" onclick="goTo('clients-screen')" id="clients-btn">
+        <div class="menu-icon" style="background:rgba(139,92,246,.15)">🏬</div>
+        <div class="menu-text"><div class="menu-title">إدارة العملاء / الفروع</div><div class="menu-sub">عرض وتفعيل/تعطيل الفروع</div></div>
+        <span class="menu-arrow">←</span>
+      </button>
+      <button class="menu-btn" onclick="goTo('admin-screen')" id="admin-btn" style="display:none">
+        <div class="menu-icon green">⚙️</div>
+        <div class="menu-text"><div class="menu-title">لوحة الإدارة</div><div class="menu-sub">إدارة المستخدمين والبيانات</div></div>
+        <span class="menu-arrow">←</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  STEP 1: CODE / CHAIN                                   -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="screen hidden" id="code-screen">
+  <div class="topbar">
+    <button class="back-btn" onclick="goBack()">→</button>
+    <div><div class="topbar-title">ابدأ التفويض</div><div class="topbar-sub">أدخل كود الفرع أو اختر يدوياً</div></div>
+  </div>
+  <div class="progress-bar"><div class="prog-step active"></div><div class="prog-step"></div><div class="prog-step"></div><div class="prog-step"></div></div>
+  <div class="scroll">
+    <div class="field-group">
+      <div class="field-label">🔢 كود الفرع (اختياري)<span class="field-hint">أدخل الكود للاختيار التلقائي</span></div>
+      <div style="display:flex;gap:8px">
+        <input class="form-input" id="store-code" type="text" placeholder="مثال: 1016 أو K1018" style="flex:1" dir="ltr" oninput="codeInput(this.value)">
+        <button class="btn btn-primary btn-sm" onclick="lookupCode()">بحث</button>
+      </div>
+    </div>
+    <div class="code-result" id="code-result">
+      <div class="code-chain" id="code-chain-name"></div>
+      <div class="code-branch" id="code-branch-name"></div>
+      <button class="btn btn-success" style="margin-top:12px" onclick="useCodeResult()">✅ استخدم هذا الفرع</button>
+    </div>
+    <hr class="divider">
+    <div class="field-label" style="margin-bottom:12px;font-size:13px">أو اختر يدوياً:</div>
+    <button class="btn btn-secondary" onclick="goTo('chain-screen')">🏪 اختيار السلسلة والفرع ←</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  CHAIN                                                  -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="screen hidden" id="chain-screen">
+  <div class="topbar">
+    <button class="back-btn" onclick="goBack()">→</button>
+    <div><div class="topbar-title">اختر السلسلة</div><div class="topbar-sub" id="chain-count-sub">—</div></div>
+  </div>
+  <div class="progress-bar"><div class="prog-step done"></div><div class="prog-step active"></div><div class="prog-step"></div><div class="prog-step"></div></div>
+  <div class="search-bar"><input class="search-input" id="chain-search" type="search" placeholder="🔍  ابحث عن سلسلة..." oninput="filterChains(this.value)" autocomplete="off"></div>
+  <div class="scroll" id="chains-list"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  BRANCH                                                 -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="screen hidden" id="branch-screen">
+  <div class="topbar">
+    <button class="back-btn" onclick="goBack()">→</button>
+    <div><div class="topbar-title">اختر الفرع</div><div class="topbar-sub" id="branch-chain-sub">—</div></div>
+  </div>
+  <div class="progress-bar"><div class="prog-step done"></div><div class="prog-step done"></div><div class="prog-step active"></div><div class="prog-step"></div></div>
+  <div class="search-bar"><input class="search-input" id="branch-search" type="search" placeholder="🔍  ابحث عن فرع..." oninput="filterBranches(this.value)" autocomplete="off"></div>
+  <div class="scroll" id="branches-list"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  FORM                                                   -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="screen hidden" id="form-screen">
+  <div class="topbar">
+    <button class="back-btn" onclick="goBack()">→</button>
+    <div><div class="topbar-title">بيانات المنسق</div><div class="topbar-sub" id="form-location-sub">—</div></div>
+  </div>
+  <div class="progress-bar"><div class="prog-step done"></div><div class="prog-step done"></div><div class="prog-step done"></div><div class="prog-step active"></div></div>
+  <div class="scroll">
+    <div class="selected-badge" style="margin-bottom:18px">
+      <div class="selected-dot"></div>
+      <div>
+        <div class="selected-val" id="form-chain-val">—</div>
+        <div style="font-size:12px;color:var(--text2)" id="form-branch-val">—</div>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="goTo('code-screen')">تغيير</button>
+    </div>
+
+    <div class="field-group">
+      <div class="field-label">👤 اسم المنسق رباعياً <span class="field-hint">بالعربية فقط · 4 كلمات على الأقل</span></div>
+      <input class="form-input" id="f-name" type="text" placeholder="أحمد محمد علي إبراهيم" autocomplete="off">
+      <div class="form-error" id="err-name"></div>
+    </div>
+    <div class="field-group">
+      <div class="field-label">🪪 رقم البطاقة القومية <span class="field-hint">14 رقم بالضبط</span></div>
+      <input class="form-input" id="f-id" type="tel" placeholder="29901011234567" inputmode="numeric" dir="ltr">
+      <div class="form-error" id="err-id"></div>
+    </div>
+    <div class="field-group">
+      <div class="field-label">📅 تاريخ البداية</div>
+      <input class="form-input" id="f-from" type="text" placeholder="01/01/2025" dir="ltr">
+      <div class="form-error" id="err-from"></div>
+    </div>
+    <div class="field-group">
+      <div class="field-label">📅 تاريخ النهاية</div>
+      <input class="form-input" id="f-to" type="text" placeholder="31/12/2025" dir="ltr">
+      <div class="form-error" id="err-to"></div>
+    </div>
+    <div class="field-group" id="insurance-group" style="display:none">
+      <div class="field-label">🔢 الرقم التأميني للمنسق <span class="field-hint" style="color:var(--danger)">مطلوب</span></div>
+      <input class="form-input" id="f-insurance" type="tel" placeholder="234657" inputmode="numeric" dir="ltr">
+      <div class="form-error" id="err-insurance"></div>
+    </div>
+    <div class="field-group" id="products-group">
+      <div class="field-label">📦 المنتجات <span class="field-hint">اختياري</span></div>
+      <input class="form-input" id="f-products" type="text" placeholder="منتجات غذائية">
+    </div>
+    <div id="dup-warning" style="display:none;background:rgba(245,158,11,.1);border:1px solid var(--warn);border-radius:12px;padding:12px;margin-bottom:8px;font-size:13px;color:var(--warn)">
+      ⚠️ يوجد تفويض سابق لهذا المنسق في نفس الفرع. تأكد قبل الاستمرار.
+    </div>
+  </div>
+  <div class="action-bar">
+    <button class="btn btn-primary" onclick="goToPreview()">معاينة التفويض ←</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  PREVIEW                                                -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="screen hidden" id="preview-screen">
+  <div class="topbar">
+    <button class="back-btn" onclick="goBack()">→</button>
+    <div><div class="topbar-title">معاينة التفويض</div><div class="topbar-sub" id="preview-tmpl-sub">—</div></div>
+    <button class="icon-btn" onclick="openShareMenu()">↗️</button>
+  </div>
+  <div class="scroll">
+    <div id="preview-content"></div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:16px">
+      <div style="padding:12px 14px;font-size:13px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between"><span style="color:var(--text2)">السلسلة</span><span id="rv-chain" style="font-weight:700"></span></div>
+      <div style="padding:12px 14px;font-size:13px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between"><span style="color:var(--text2)">الفرع</span><span id="rv-branch" style="font-weight:700"></span></div>
+      <div style="padding:12px 14px;font-size:13px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between"><span style="color:var(--text2)">المنسق</span><span id="rv-name" style="font-weight:700"></span></div>
+      <div style="padding:12px 14px;font-size:13px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between"><span style="color:var(--text2)">البطاقة</span><span id="rv-id" style="font-weight:700;direction:ltr"></span></div>
+      <div style="padding:12px 14px;font-size:13px;display:flex;justify-content:space-between"><span style="color:var(--text2)">المدة</span><span id="rv-period" style="font-weight:700;direction:ltr"></span></div>
+    </div>
+  </div>
+  <div class="action-bar">
+    <button class="btn btn-success" onclick="printAndSave()">🖨️ طباعة / حفظ PDF</button>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary" style="flex:1" onclick="openShareMenu()">↗️ مشاركة (Word / PDF)</button>
+      <button class="btn btn-secondary" style="flex:1" onclick="saveOnly()">💾 حفظ في السجل</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  HISTORY                                                -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="screen hidden" id="history-screen">
+  <div class="topbar">
+    <button class="back-btn" onclick="goBack()">→</button>
+    <div><div class="topbar-title">التفويضات السابقة</div><div class="topbar-sub" id="history-sub">—</div></div>
+    <button class="icon-btn" onclick="exportHistory()">📥</button>
+  </div>
+  <div class="search-bar"><input class="search-input" id="history-search" type="search" placeholder="🔍  ابحث عن اسم أو سلسلة..." oninput="filterHistory(this.value)" autocomplete="off"></div>
+  <div class="scroll" id="history-list"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  ANALYTICS                                              -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="screen hidden" id="analytics-screen">
+  <div class="topbar">
+    <button class="back-btn" onclick="goBack()">→</button>
+    <div><div class="topbar-title">📊 لوحة الإحصاءات</div></div>
+    <button class="icon-btn" onclick="exportAnalytics()">📥</button>
+  </div>
+  <div class="scroll">
+    <div class="kpi-grid" id="kpi-grid"></div>
+    <div class="chart-card">
+      <div class="chart-title">📈 التفويضات اليومية (آخر 7 أيام)</div>
+      <div class="chart-wrap"><canvas id="chart-daily"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">🏪 أكثر السلاسل استخداماً</div>
+      <div class="chart-wrap"><canvas id="chart-chains"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">📋 حالة التفويضات</div>
+      <div class="chart-wrap"><canvas id="chart-status"></canvas></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  CLIENTS MANAGEMENT                                     -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="screen hidden" id="clients-screen">
+  <div class="topbar">
+    <button class="back-btn" onclick="goBack()">→</button>
+    <div><div class="topbar-title">🏬 إدارة العملاء</div><div class="topbar-sub" id="clients-sub">—</div></div>
+  </div>
+  <!-- Tabs — shown only for admin -->
+  <div id="clients-tabs-bar" style="display:flex;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0">
+    <button id="clients-tab-enabled" onclick="switchClientsTab('enabled')" style="flex:1;padding:14px;background:var(--accent);color:white;border:none;font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer">✅ Enabled</button>
+    <button id="clients-tab-disabled" onclick="switchClientsTab('disabled')" style="flex:1;padding:14px;background:var(--surface2);color:var(--text2);border:none;font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer">❌ Disabled</button>
+  </div>
+  <!-- Search -->
+  <div class="search-bar">
+    <input class="search-input" id="clients-search" type="search" placeholder="🔍  بحث بالكود أو السلسلة أو الفرع..." oninput="filterClientsList(this.value)" autocomplete="off">
+  </div>
+  <div class="scroll" id="clients-list"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  ADMIN                                                  -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="screen hidden" id="admin-screen">
+  <div class="topbar">
+    <button class="back-btn" onclick="goBack()">→</button>
+    <div><div class="topbar-title">⚙️ لوحة الإدارة</div></div>
+  </div>
+  <div class="scroll">
+    <div class="admin-section">
+      <div class="admin-section-header">👥 المستخدمون</div>
+      <div id="users-list"></div>
+      <div style="padding:12px 16px">
+        <button class="btn btn-primary btn-sm" onclick="openAddUser()">+ إضافة مستخدم</button>
+      </div>
+    </div>
+    <div class="admin-section">
+      <div class="admin-section-header">🗄️ إدارة البيانات</div>
+      <div class="admin-item">
+        <div><div class="admin-item-text">📥 تحميل قائمة العملاء للتعديل</div><div class="admin-item-sub">اختر نوع التحميل ثم ارفع الملف المعدل</div></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-success btn-sm" onclick="downloadClientsList('enabled')">📥 Enabled فقط</button>
+          <button class="btn btn-secondary btn-sm" onclick="downloadClientsList('all')">📥 الكل</button>
+          <button class="btn btn-primary btn-sm" onclick="document.getElementById('update-excel-upload').click()">📤 رفع للتحديث</button>
+          <input type="file" id="update-excel-upload" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleExcelUpload(event)">
+        </div>
+      </div>
+      <div class="admin-item">
+        <div><div class="admin-item-text">تصدير قاعدة البيانات</div><div class="admin-item-sub">حفظ كل التفويضات والإعدادات</div></div>
+        <button class="btn btn-secondary btn-sm" onclick="exportDB()">📥 تصدير</button>
+      </div>
+      <div class="admin-item">
+        <div><div class="admin-item-text">استيراد قاعدة البيانات</div><div class="admin-item-sub">استعادة من ملف JSON</div></div>
+        <button class="btn btn-secondary btn-sm" onclick="importDB()">📤 استيراد</button>
+      </div>
+      <div class="admin-item">
+        <div><div class="admin-item-text">🗑️ حذف العملاء (الداتا الرئيسية)</div><div class="admin-item-sub">حذف العملاء المضافين من الداتا الأصلية</div></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-danger btn-sm" onclick="deleteClientsFromMainData()">🗑️ حذف العملاء</button>
+        </div>
+      </div>
+      <div class="admin-item">
+        <div><div class="admin-item-text">🗑️ حذف بيانات التفويضات</div><div class="admin-item-sub">حذف سجل التفويضات فقط (لا يؤثر على العملاء)</div></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-danger btn-sm" onclick="clearDelegationsOnly()">🗑️ حذف التفويضات</button>
+        </div>
+      </div>
+    </div>
+    <!-- ═══ إضافة فروع يدوي ═══ -->
+    <div class="admin-section">
+      <div class="admin-section-header">🏬 إضافة محلات / فروع</div>
+      <!-- Tab buttons -->
+      <div style="display:flex;border-bottom:1px solid var(--border)">
+        <button id="tab-manual" onclick="switchBranchTab('manual')" style="flex:1;padding:12px;background:var(--accent);color:white;border:none;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer">إضافة يدوي</button>
+        <button id="tab-excel" onclick="switchBranchTab('excel')" style="flex:1;padding:12px;background:var(--surface2);color:var(--text2);border:none;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer">رفع Excel</button>
+      </div>
+
+      <!-- MANUAL TAB -->
+      <div id="tab-manual-content" style="padding:14px">
+        <div style="display:grid;grid-template-columns:1fr 2fr 2fr;gap:8px;margin-bottom:10px">
+          <input class="form-input" id="new-code" type="text" placeholder="كود" dir="ltr" style="font-size:13px;padding:10px">
+          <input class="form-input" id="new-chain" type="text" placeholder="السلسلة" style="font-size:13px;padding:10px">
+          <input class="form-input" id="new-branch-name" type="text" placeholder="الفرع" style="font-size:13px;padding:10px">
+        </div>
+        <button class="btn btn-primary" onclick="addBranchManual()" style="padding:10px">➕ إضافة إلى القائمة</button>
+        <div id="manual-add-result" style="margin-top:8px;font-size:13px;color:var(--success);display:none"></div>
+      </div>
+
+      <!-- EXCEL TAB -->
+      <div id="tab-excel-content" style="padding:14px;display:none">
+        <div style="background:var(--surface2);border:1px dashed var(--border);border-radius:12px;padding:16px;text-align:center;margin-bottom:12px">
+          <div style="font-size:28px;margin-bottom:8px">📊</div>
+          <div style="font-size:13px;color:var(--text2);margin-bottom:4px">ارفع ملف Excel بـ 3 أعمدة:</div>
+          <div style="font-size:12px;color:var(--text3);margin-bottom:12px">كود | سلسلة | فرع</div>
+          <div style="display:flex;gap:8px;justify-content:center">
+            <button class="btn btn-secondary btn-sm" onclick="downloadSampleExcel()">📥 تحميل Sample</button>
+            <button class="btn btn-primary btn-sm" onclick="document.getElementById('excel-upload').click()">📤 رفع Excel</button>
+          </div>
+          <input type="file" id="excel-upload" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleExcelUpload(event)">
+        </div>
+        <!-- Preview table -->
+        <div id="excel-preview" style="display:none">
+          <div style="font-size:13px;font-weight:700;margin-bottom:8px" id="excel-preview-title"></div>
+          <div style="overflow-x:auto;max-height:200px;overflow-y:auto">
+            <table id="excel-table" style="width:100%;border-collapse:collapse;font-size:12px">
+              <thead>
+                <tr style="background:var(--surface2)">
+                  <th style="padding:8px;text-align:right;border:1px solid var(--border)">كود</th>
+                  <th style="padding:8px;text-align:right;border:1px solid var(--border)">السلسلة</th>
+                  <th style="padding:8px;text-align:right;border:1px solid var(--border)">الفرع</th>
+                  <th style="padding:8px;border:1px solid var(--border)">🗑️</th>
+                </tr>
+              </thead>
+              <tbody id="excel-table-body"></tbody>
+            </table>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="btn btn-success" onclick="insertExcelData()" style="flex:1">✅ INSERT - إضافة للقائمة</button>
+            <button class="btn btn-secondary" onclick="clearExcelPreview()" style="flex:1">❌ إلغاء</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ تعديل قالب التفويض ═══ -->
+    <div class="admin-section">
+      <div class="admin-section-header">📝 تعديل قوالب التفويضات</div>
+      <div style="padding:14px">
+        <div class="field-group">
+          <div class="field-label">اختر السلسلة لتعديل قالبها</div>
+          <select class="form-input" id="template-chain-select" onchange="loadTemplateForEdit(this.value)" style="font-size:13px;padding:10px">
+            <option value="">-- اختر سلسلة --</option>
+            <option value="carrefour">كارفور</option>
+            <option value="bndh">بنده</option>
+            <option value="spinney">سبينس / الفا</option>
+            <option value="othym">العثيم</option>
+            <option value="lulu">لولو</option>
+            <option value="fathallah">فتح الله جملة</option>
+            <option value="general">قالب عام</option>
+          </select>
+        </div>
+        <div id="template-editor-area" style="display:none">
+          <div class="field-label" style="margin-bottom:8px">نص القالب (HTML) - يمكن تعديل النصوص</div>
+          <textarea id="template-html-editor" class="form-input" rows="10" style="font-size:12px;direction:ltr;text-align:left;font-family:monospace;min-height:200px"></textarea>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="btn btn-primary" style="flex:1;padding:10px" onclick="saveTemplateEdit()">💾 حفظ التعديل</button>
+            <button class="btn btn-secondary" style="flex:1;padding:10px" onclick="previewTemplateEdit()">👁️ معاينة</button>
+            <button class="btn btn-danger btn-sm" onclick="resetTemplate()">↩️ استعادة الأصلي</button>
+          </div>
+          <div id="template-edit-result" style="margin-top:8px;font-size:13px;display:none"></div>
+        </div>
+      </div>
+    </div>
+    <div class="admin-section">
+      <div class="admin-section-header">📊 إحصاءات سريعة</div>
+      <div class="admin-item"><div><div class="admin-item-text">إجمالي التفويضات</div></div><div id="admin-total" style="font-weight:700;color:var(--accent)">0</div></div>
+      <div class="admin-item"><div><div class="admin-item-text">السلاسل المتاحة</div></div><div id="admin-chains-count" style="font-weight:700;color:var(--accent)">403</div></div>
+      <div class="admin-item"><div><div class="admin-item-text">الفروع المتاحة</div></div><div id="admin-branches-count" style="font-weight:700;color:var(--accent)">1,764</div></div>
+    </div>
+    <!-- ═══ لستتين العملاء ═══ -->
+    <div class="admin-section">
+      <div class="admin-section-header">📋 قائمة العملاء المضافين (Enabled / Disabled)</div>
+      <div id="admin-updates-lists" style="padding:14px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  SHARE MENU                                             -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="share-menu" id="share-menu" onclick="closeShareMenu(event)">
+  <div class="share-sheet">
+    <div class="share-title">مشاركة التفويض كـ Word</div>
+    <div class="share-grid" style="grid-template-columns:repeat(3,1fr)">
+      <button class="share-btn" onclick="shareVia('whatsapp')">
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="16" fill="#25D366"/><path d="M23.5 8.5C21.6 6.6 19.1 5.5 16.4 5.5c-5.5 0-10 4.5-10 10 0 1.8.5 3.5 1.3 5L5.5 26.5l6.2-1.6c1.4.8 3 1.2 4.7 1.2 5.5 0 10-4.5 10-10-.1-2.7-1.2-5.2-2.9-7.6zm-7.1 15.4c-1.5 0-3-.4-4.3-1.2l-.3-.2-3.1.8.8-3-.2-.3c-.8-1.3-1.3-2.9-1.3-4.5 0-4.6 3.7-8.3 8.3-8.3 2.2 0 4.3.9 5.9 2.4 1.6 1.6 2.4 3.6 2.4 5.9 0 4.7-3.7 8.4-8.2 8.4zm4.5-6.2c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.5.1-.2.2-.6.8-.8 1-.1.2-.3.2-.5.1-.7-.3-1.4-.7-2-1.2-.5-.5-1-1.1-1.4-1.7-.1-.2 0-.4.1-.5l.4-.4c.1-.1.2-.3.2-.4 0-.1 0-.3-.1-.4l-.8-1.8c-.2-.4-.4-.4-.5-.4h-.5c-.2 0-.4.1-.6.3-.7.8-1 1.7-.9 2.7.2 1.3 1 2.5 1.9 3.5 1.3 1.5 2.9 2.6 4.7 3.2.7.2 1.3.3 2 .2.8-.1 1.6-.6 2-1.3.2-.4.2-.8.1-1.1z" fill="white"/></svg>
+        <span class="share-btn-label">واتساب</span>
+      </button>
+      <button class="share-btn" onclick="shareVia('telegram')">
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="16" fill="#2CA5E0"/><path d="M22.9 9.3l-2.8 13.2c-.2.9-.7 1.1-1.5.7l-4-3-1.9 1.8c-.2.2-.4.3-.8.3l.3-4.1 7.3-6.6c.3-.3-.1-.4-.5-.2l-9 5.7-3.9-1.2c-.8-.3-.9-.8.2-1.2l15.2-5.9c.8-.3 1.5.2 1.4 1.5z" fill="white"/></svg>
+        <span class="share-btn-label">تليجرام</span>
+      </button>
+      <button class="share-btn" onclick="shareVia('email-choice')">
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="16" fill="#EA4335"/><path d="M8 11l8 5 8-5v10H8V11zm0-2h16l-8 5-8-5z" fill="white"/></svg>
+        <span class="share-btn-label">إيميل</span>
+      </button>
+      <button class="share-btn" onclick="shareVia('word')">
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="6" fill="#2B579A"/><text x="16" y="22" text-anchor="middle" fill="white" font-size="14" font-weight="bold" font-family="Arial">W</text></svg>
+        <span class="share-btn-label">Word</span>
+      </button>
+      <button class="share-btn" onclick="shareVia('pdf')">
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="6" fill="#D93025"/><text x="16" y="22" text-anchor="middle" fill="white" font-size="11" font-weight="bold" font-family="Arial">PDF</text></svg>
+        <span class="share-btn-label">PDF</span>
+      </button>
+    </div>
+    <!-- Email choice sub-menu -->
+    <div id="email-choice-panel" style="display:none;margin-top:12px">
+      <div style="font-size:13px;color:var(--text2);margin-bottom:10px;text-align:center">اختر تطبيق الإيميل</div>
+      <div style="display:flex;gap:10px">
+        <button class="share-btn" style="flex:1" onclick="shareVia('gmail')">
+          <svg width="26" height="26" viewBox="0 0 32 32"><path d="M2 8l14 9L30 8v16H2V8z" fill="#EA4335"/><path d="M2 8l14 9L30 8" fill="none" stroke="#fff" stroke-width="1.5"/><path d="M2 8h28v16H2z" fill="none" stroke="#ddd" stroke-width="0.5"/></svg>
+          <span class="share-btn-label">Gmail</span>
+        </button>
+        <button class="share-btn" style="flex:1" onclick="shareVia('outlook')">
+          <svg width="26" height="26" viewBox="0 0 32 32"><rect width="32" height="32" rx="4" fill="#0072C6"/><rect x="4" y="8" width="14" height="16" rx="2" fill="#fff"/><text x="11" y="20" text-anchor="middle" fill="#0072C6" font-size="9" font-weight="bold" font-family="Arial">O</text><rect x="17" y="11" width="11" height="10" rx="1" fill="#50D9FF" opacity="0.7"/></svg>
+          <span class="share-btn-label">Outlook</span>
+        </button>
+        <button class="share-btn" style="flex:1" onclick="shareVia('email')">
+          <svg width="26" height="26" viewBox="0 0 32 32"><rect width="32" height="32" rx="4" fill="#555"/><path d="M6 10l10 7 10-7v12H6V10zm0-2h20l-10 7L6 8z" fill="white"/></svg>
+          <span class="share-btn-label">إيميل آخر</span>
+        </button>
+      </div>
+      <button class="btn btn-secondary" style="margin-top:10px;padding:8px" onclick="document.getElementById('email-choice-panel').style.display='none'">← رجوع</button>
+    </div>
+    <button class="btn btn-secondary" style="margin-top:10px" onclick="closeShareMenu()">إلغاء</button>
+  </div>
+</div>
+
+<!-- ADD USER MODAL -->
+<div class="modal-overlay" id="add-user-modal">
+  <div class="modal">
+    <div class="modal-title">👤 إضافة مستخدم جديد</div>
+    <div class="field-group"><div class="field-label">اسم المستخدم</div><input class="form-input" id="new-username" type="text" placeholder="username" dir="ltr"></div>
+    <div class="field-group"><div class="field-label">كلمة المرور</div><input class="form-input" id="new-password" type="text" placeholder="password" dir="ltr"></div>
+    <div class="field-group"><div class="field-label">الاسم الظاهر</div><input class="form-input" id="new-displayname" type="text" placeholder="Ahmed Mohamed"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('add-user-modal')">إلغاء</button>
+      <button class="btn btn-primary" onclick="addUser()">إضافة</button>
+    </div>
+  </div>
+</div>
+
+<!-- FILE INPUT (hidden) -->
+<input type="file" id="import-file" accept=".json" style="display:none" onchange="handleImport(event)">
+
+<div class="toast" id="toast"></div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  DATA + LOGIC                                           -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<script>
+// ─────────────────────── DATA ───────────────────────
+const CHAINS_DATA = {"ايه مارت":["ايه مارت"],"ابانوب":["ابانوب"],"البركه":["البركه"],"الفضالي":["فيصل"],"الحبيب":["الحبيب","قنا"],"الحسينى":["الرحاب","داي تو داي","التجمع الاول"],"المصريه":["مدينة نصر","النادى الاهلى","السواح","مكرم عبيد","بدر"],"المرشيدي":["الحي العاشر","الشيخ زايد"],"الصفا مول":["دكرنس"],"الوفاء":["الوفاء"],"عالم ماركت":["عالم ماركت"],"محمود الفار":["المهندسين","الميرغنى","B6","ارابيلا","بور سعيد","التجمع الخامس","مدينتى","ميفيدا","زايد","التسعين الشمالي","مدينتى 2","شيراتون","مراسى"],"الفا":["التجمع الخامس","الحجاز","المعادى","روكسى","زايد"],"سبينس":["الدقى","الزمالك","زهراء المعادى","ElManya Store 1","Hurghada Store الدهار","التجمع الخامس (مكسيم)","الشروق","المقطم","الهرم","أرينا مول","زايد","سموحة","سيتى سكيب","سينزو","طنطا","مول العرب","المعادى","الجامعة الامريكية","السراج مول","توكانو","المطار","سوريا","المهندسين","العبور","المنصوره","جليم","دهشور","زايد 2","ايناوكس","السعودى الالمانى","الكوثر","أمواج","سيدى عبد الرحمن","العلمين","مارينا 5"],"اسواق علام":["العمرانية"],"اسواق الامير":["اسواق الأمير"],"اسواق البركة":["اسواق البركة"],"اسواق الجدع":["العشرين","العمرانية"],"أسواق الجيزاوي":["أسواق الجيزاوي"],"بشاير هايبر ماركت":["بشاير هايبر ماركت"],"باسم ماركت":["شيراتون","الدبلوماسيين","الدبلوماسيين 2","جرين بيتش","ماربيلا","مارينا 1","مارينا 2","مارينا 4","مارينا 5","البلاح","الزهور","الكروان","جرين","ديامون بيتش","رويال بيتش","قناه السويس","كازابيانكا","مينا 3","هايدى","ماونتن فيو","الرواد"],"بيت الجملة":["الترعه","الحديد والصلب","الفلكى","عرامه","ميراج","سكوير مول","مول المستقبل","التجمع الخامس","الحضره"],"بست واى":["بست واى","زايد"],"بونجور":["Bonjour- الواحات","الاؤمراء","البحر الاعظم","الحصرى","الشروق 1","الشروق 2","الشيخ زايد","الصحراوى","العاشر من رمضان","العبور","القطاميه","اللاسلكى","المعادى","جهينه","جولف العبور","دجله","راغب","سوديك","صقر قريش","كورنيش المعادى","الغردقه","اليكس ويست","المنتزة","برج العرب","مرغم","تشاكوس","6أكتوبر","بيفرلى هيلز","الطريق الصحراوي","المحور","الشخ زايد","الواحات","المعادي أوتوستراد","كورنيش المعادي","المعادي دجلة","توتال سكوير","المعادي اللاسلكي","أوتوستراد المقطم","هضبة المقطم","القطامية هايتس","ش 14 المعادي","المعادي الجديدة","ميراج","المقطم 1","محطة المقطم 2","النحاس الجديدة","حسن مأمون","السراج مول","التجمع الخامس","مكرم عبيد","مصطفى النحاس 1","النحاس 2","مدينة نصر","السفارات","الطيران","الشروق الجديدة","مدينة الشروق","جسر السويس","هليوبوليس","مدينتى","مصر الجديدة","الشروق","الأوبرج","الهرم","فيصل","شارع الهرم","الروضة","زمر","المحلة","الأمراء","الدولي الساحلي","الطريق الدولي الساحلي","سيدي كرير","أمواج","العلمين","مارينا","كرير"],"كابرى":["مدينة نصر"],"كارفور":["CFC","الاسماعيلية","الشروق","العبور","العروبه","الغردقه","الماظه","المعادى","داندى مول","ستى لايت","صن ستى","طنطا","محرم بك","مدينتى","مراكز","مول مصر","حى النور","دمنهور","سانتيرا","الزقازيق"],"كارفور اكسبريس":["15 مايو","اعمار","الازهر","الاسمرات","البارون","البنيان","الجزائر","الجزيرة مول","الرحاب","الزقازيق","الزيتون","العجمى","الغردقه","المحافظه","المقطم","المنتزة","المنصوره","بفرلى هيلز","جرين بلازا","حلوان","داون تاون","دجله","دمشق","دولفن مول","زكى رجب - الابراهيميه","زيزينيا مول","سرايا مول","شبرا","طيبه مول","كفر عبده","محطه الرمل","مشعل","ميجا","ميفيدا","الحى العاشر","رمسيس","شبرا الخيمه","ارض الجولف","الخليفة المأمون","السيدة زينب","مدينتى","الهانوفيل","بنها","بنها","الحصرى","سرايا مول 2","البروج","الجامعه","بور فؤاد","الشروق 2","روكسى","العاصمه الاداريه","لكازا","نيو كايرو","البروج 2","سيليا","مارينا","بورتو جولف","العلمين"],"لولو":["الحمد","التجمع الاول","شيراتون","التجمع الخامس","المحكمه"],"سوبيكو":["الملتقى","دمنهور","طره","ونجت","المقطم","النعام","اكتوبر","بدر","الازهر","الويلى","زكى رجب","الزقازيق"],"سيركل":["A & W","الازاريطه","الشطبى","الصحراوي 1","الصحراوي 2","الصحراوي 3","الفردوس","القطاميه","المعادى","المعمورة","بفرلى هيلز (هب)","جليم","رشدى","سوديك","طريق دهشور","الرمل","تيفولى اليكس","الرحاب","الشهيد 2","المحور","صلاح الدين","تيريومف","شيراتون","CFC","جيهان السادات","جوزيف تيتو","الجامعة الامريكية","المشير","حدائق الاهرام","الميرلاند","الكيلو 27","نوباريه","SA بوابات الإسكندرية","شيل اوت دولفين","A&W شيلاوت 2","الدقى","ميرلاند","محور الشهيد","Con. Goods الميرغني","Sira السنهوري 2","Meerkat السنهوري 1","19 Nation  الشمس","My Mart جوزيف تيتو","Apple Green -  النادي الأهلي 2","Ynwa النادي الأهلي 1","Trade Top محور الشهيد 1","Trade Well ممشى شيراتون","Trade Top كايرو فيستيفال","Rawasy محور الشاذلي","Trade Top ميدور","A&W الشروق","Topic شينزو أبي 1","HOA مكان مول","Rawasy سيتي سكيب","Cloud Trade شيلاوت العبور","Trade Top الرحاب","Kayan الجامعة البريطانية","A&W قطامية وطنية","Ynwa النحاس 2","AON بطراوي 2","Rawasy بطراوي","Sira شينزو أبي 1","Trade More مدينتى 1","Trade More مدينتى 2","Trade More مدينتى 3","Cloud Trade شيراتون","GA Creators كوبري سفير","Auto Land الحجاز","Cloud Trade روكسي","ERM مصر للبترول","TD الجامعة الامريكية","Triangle المجمع الطبي","AMG العاصمة الجديدة","محرم بك","ME كومباوند ذا فيو","A&W المعمورة","SA بوابات المعمورة","Shady Dorgham المنصورة","MJM تيفولي","A&W الكيلو 27","المنصوره","النحاس 1","رابعه","الطيران","الماظه","النخيل","الجلاء","المركزيه","شارع البحر","المحطه","الحمام","امواج","هاسيندا","العلمين","الدبلوماسيين","العلمين 2","العلمين 3","مارينا 7","الامين","AON طاقة مارينا","الوطنيه","سيشل","مارينا 7","مارينا 4","مارينا2","العلمين 4"],"ديسكفري":["ديسكفري"],"الفرجاني":["احمد عصمت","اكتوبر","الزيتون","العشرين","المطريه","النزهه","النعام","ترعه الجبل","جمال عبد الناصر","شبرا الخيمه","عباس العقاد","فيصل 2","روض الفرج","مسطرد","زهراء عين شمس","احمد اسماعيل","منشيه التحرير","تيريومف","اول جمال","الحي الاول","الدقى","الهرم","العروبه","حلوان"],"الهوارى":["المهندسين","عين شمس"],"الرايه":["التجمع الأول","المنيا","الوفاء والامل","حدائق القبه","مدينة نصر","المقطم","ميدان الحريه","العبور","المهندسين","شيراتون","الواحة","حدائق اكتوبر","فيصل","الزقازيق","الزقازيق"],"اسواق الشريف":["المندره"],"العثيم":["15 مايو","ابن سندر","الثلاثينى","الحارونى","الحى التاسع","الدقى","الزيتون","السودان - المهندسين","العمرانية","الفردوس","اللبينى","المطريه","النزهه","حلوان 3","حلوان 1","حلوان 2","سنان باشا","عين شمس","فرع العشرين فيصل","قباء","قليوب","قليوب 2","مؤسسه الزكاه","الطالبية","ناصر الثورة","سما مول","حدائق حلوان","المقطم","التجمع الخامس","طهران","مهدى عرفة","الحلمية","البكري","السفارا","احمد فخرى","الانصار","عدن","العروبه","المطبعة","الهرم","زغلول","التعاون","فيصل","الحوامديه","طربلس","أحمد حسن","ولى العهد","مدينة نصر","حدائق الاهرام","خسرو","البدرشين","الفسطاط","ميدان الحريه","تيريومف","زهراء العمرانية","بنها","زهراء المعادى","سكوير وان","الزقازيق","حلوان 4","ميدان الساعة","الحلمية 2","شبين الكوم 1","شبين الكوم 2"],"عماد سليمان":["عماد سليمان"],"يورو مارشيه":["حدائق الاهرام"],"اكسيبشن":["الهضبه 1","الهضبه 2","حدائق الاهرام","مدينتى","الهضبه س","المعادى","الهضبه 3","التجمع الخامس","النقابات"],"فتح الله جمله":["ragheb- كرموز","الابراهيميه","الجمرك","الزيتون","العصافرة","الغردقه","الفراعنة","المنتزة","المنصوره","بانوراما ( العبور )","برج العرب","بيانكى","جرين تاور","جناكليس","روز جاردن","سان ستيفانو","سبورتنج","محرم بك","محرم بك المنشا","ميامى","وابور المياة","الوفاء والأمل","جسر السويس","خالد بن الوليد","الهرم","بشاير الخير","محطه الرمل","حدائق الاهرام","الغردقة 2","التجمع الثالث","الحصرى","الزقازيق","السيدة زينب","أمواج","روزانا","مارينا","السراب كيلو 42","نيس 1","العالمين"],"فتح الله اسواق":["اكتوبر","الابراهيميه ريفيرا","الدخيله 1","العجمى ستار","المحله","النصر","الهانوفيل","بحرى","جاردينيا","دمنهور","ستانلى","ستى سكوير","سموحة","سيدى بشر","سيدى جابر المحطة","طنطا","طنطا 2","طوسون","فليمنج","كفر الدوار","دربالة","الرحاب","كفر الدوار 2","ملك حفنى","دمنهور 2","ابو يوسف","دمياط","مطروح"],"فتح الله اسواق مينى":["الجواهر","الدخيله 2","سنابل","سيدى جابر المينى"],"فلامنجو هايبر ماركت":["التجمع الخامس","مدينتى"],"فريش فود":["Point 90 Mall","الشيخ زايد","سان ستيفانو","بالم هيلز","بالم هيلز"],"فريندز جروب":["التجمع الأول"],"جودز ماركت":["العبور"],"هايبر ايه تو زد":["هايبر ايه تو زد"],"هايبر العابد":["هايبر العابد","شبرا"],"هايبر المنصوره للتجاره":["هايبر المنصوره للتجاره"],"القدس الشريف":["شبرا الخيمه"],"هايبر السلامي":["هايبر السلامي"],"هايبر الشرقيه":["هايبر الشرقيه","شبرا الخيمه"],"هايبر جودة":["هايبر جودة"],"هايبر موسى":["مؤسسه الزكاه"],"حلو الجامعه 2":["حلو الجامعه 2"],"هايبر وان":["العاشر من رمضان","زايد","سفنكس","بدر"],"ايمدج":["حلوان","مكرم عبيد"],"خير زمان":["اركاديا مول","اشجار دارنا","اكتوبر","الاهلى","البطل احمد عبدالعزيز","التحرير","السودان","السيدة","الظاهر","العمرانية","الغردقه","المقطم","المندره","المنصوره","المنيل","النخيل","النزهه","الهضبه","ايران","أسيوط","بن سندر","بولكلى","بيتشو","حدائق الأهرام","حدائق حلوان","حلوان","ذاكر حسين","ريحانه","سبورتنج","سموحة 1","شبرا 1","شبرا 2","طنطا","فيصل حسن محمد","مصر والسودان","نوال","نوبار","لبنان","احمد الصاوى","السفارات","حدائق المعادى","الاسراء المعلمي","ابو المواهب","عمان","المطبعة","مدكور","ابو وقاص","الفردوس","الحى الثالث","كريم بنونة","عباد الرحمن","المعراج","الفسطاط","جليم","حدائق الأهرام 2","المندرة 2","الهضبه الوسطى","نادي الشمس","مول براديس","مول القصر","تاون ستارز","المدينة المنور","شبرا 3","النادى","شارع  17","المعادى","الحي السابع","السابع","حدائق الاهرام 3","المندرة 3","راس غارب","سوهاج","مصرالقديمه","بدر","لوساكا","حلوان 2","اكتوبر المتميز","جرجا","الكوثر","الاقصر","استديو الهرم","الحى الخامس","الهانوفيل","زغلول","العصافرة","حموده","محمد فريد - النزهه","دمنهور","الحجاز","قليوب","الأكاديمية","شارع 10","القرية السياحية الاولى","الحي الايطالي","البوابة الثانية","السايس","عبد الرحمن باشا","راغب","الفسطاط 2","زهراء المعادى","النصر","ابو حديد","جاردينيا حدائق الأهرم","كعابيش","مول اللوتس حدائق اكتوبر","مزار","سموحة 2","بندر اسوان","شانهوريه قنا","بدر","نجادا","منفلوط","قوص","الخزان","كعبيش 2","الاسراء المهندسين","سرايا","ذو الفقار","احمد علام","المساحة","رياض","الدقى اسوان","طرابلس","الواحه","تاون مول","محمد رمزى","ابو بكر الصديق","ريحان الزيتون","الصفا والمروه","الحى السادس","جريت مول","العاشر من رمضان","الحى الثانى عشر","الزهور","15 مايو","متحف المنيل","العالمين"],"المحلاوى":["التجمع الخامس","الحى العاشر","الطيران","المستقبل","تيريومف","مسطرد","مصطفى النحاس","مكرم عبيد","ألف مسكن","النحاس 2","التجمع - كور مول","العبور","المنصوره","العبور 2","التجمع الاول","المهندسين","اكتوبر","الشروق"],"المنشاوي":["المنشاوى 5","المنشاوي 1","المنشاوي 2","المنشاوي 3","المنشاوي 4","المنشاوي الجلاء","المنشاوي حسن رضوان","المنشاوي الكورنيش","المنشاوي العجيزى","هايبر دلينا"],"مارت فيل":["التجمع الخامس"],"مترو":["الثورة","الخليفة المأمون","الرحاب","الزمالك","الشروق","العريش","الكوثر","اللاسلكى","المساحة","المقطم","المنصوره","المنصوره 2","المنيل","النادى الاهلى","جامعة الدول","جنينه مول","دجله","رشدى","روكسى","زيزينيا","سموحة","سوريا","شيراتون","شيراتون 2","عمار بن ياسر","كوبرى الجامعة","لبنان","لوران","مدينتى","مصدق","مصر حلوان الزراعى","التجمع الخامس","ميشيل باخوم","مول الياسمين","الاعمار","عين شمس","اليكس ويست","الشيخ زايد","واك","شرم الشيخ","ذا لين","بور سعيد","نبق","مارينا","العلمين","هاسيندا","طريق مراسى"],"منى مترو":["الجولف","عباس العقاد"],"نجمة هيليوبلس":["ميدان الجامع","شيراتون","التجمع الخامس"],"مالتي سرفيس":["البطل احمد عبدالعزيز","البوابات","التجمع الخامس","الحجاز","الدقى","الرحاب","الرمايه","الشيخ زايد","العامريه","العروبه","الفردوس","الماظه","المحور","المطار","المعادى","الملك الصالح","المنيل","الميرغنى","أبراج عثمان","جامعة الدول","روكسى","منشيه البكرى","وسط البلد","سموحة","فم الخليج","مدينتى","الميرغني","روكس","27 البطل احمد ع العزيز","المريوطيه","البطل احمد ع العزيز","جامعه الدول","مدينتى 2","صلاح سالم","احمد عبد العزيز-داخل بنزينه موبيل","البطل احمد عبد العزيز","الجيزه","الحجاز","الخليفه مع الحكماء","السيد الميرغني","العروبه داخل محطه بنزين موبيل","بعد اول ميدان بعد هايبر ميدان جهينه","تقاطع الخليفه المامون مع الميرغني","داخل بنزينه موبيل","ش جامعه الدول العربيه تقاطع شارع الجزائر","شارع محمود 82 داخل البنزينه","فلسطين","محور 26 يوليو","اوتوستراد","Cfc","النور","النرجس1","سفنكس","اكتوبر"],"اوسكار":["ارض الجولف","التجمع الخامس","الزمالك","مدينتى","المعادى","واتر واى","اكتوبر","زايد","راس الحكمه"],"بنده":["Qaha (اسكندرية الزراعى)","اكتوبر","العبور","مكرم عبيد","الرحاب","المحله","المعادى"],"أولاد رجب":["الاستاد","التجمع الاول","التجمع الخامس","التجنيد","الجزائر","الجيزة","الحجاز","الحصرى","الرحاب","الزيتون","السيدة","الظاهر","العبور","الفسطاط","الكوثر","اللاسلكى","المحلة","المدينة","المريوطية - المجزر","المطار","المقطم 1","المقطم 2","المندره","المنصوره 2","الميرغنى 2","النحاس 2","النعام","احمد فخرى","أسيوط","بنى سويف","حدائق الأهرام","حدائق القبه","حدائق حلوان","حلوان","دمياط","رياض باشا","سانت فاطيما","شبرا","شريف باشا","فيصل الاطباء","قناه السويس","كفر الشيخ","مول فايف استارز","وندر لاند","مسطرد","الفنجرى","الكيلو 4.5"],"ماركت رمسيس":["شبرا"],"رويال هاوس":["هليوبليس","الشروق"],"سامي سلامة":["اسماعيل رمزى","عباس العقاد","عثمان بن عفان","مصر و السودان","جسر السويس","التجمع الخامس"],"السرايا":["الاقبال","العيسوى","سموحة","كفر عبده","كفر عبده","لوران","سموحة","زيزينيا","سابا باشا","التجمع الخامس","مصر الجديدة","الجامعة الامريكية","قرطاج"],"سعودى":["التجمع الخامس","الحجاز - المهندسين","الحكمه","الدقى","الزمالك","الشيخ زايد","الطيران","المعادى","حسنين هيكل","دجله","دريم","روكسى","سفنكس","سوديك","سيتى ستارز","شيراتون","واتر واى","مكرم عبيد","مول العرب","الشروق","دستركت - 5","مدينتى","سوديك 2","هايد بارك","العلمين","قرية مراسى","كيلو 180","راس الحكمه"],"صنى ماركت":["الزمالك"],"وكاله":["الترعه","المختلط","المشايه","ساميه الجمل","طلخا 1","طلخا 2","قناه السويس","هايبر","برايم مارت","شارع الترعة","دكرنس","بلقاس","اجا","النوادى","حى الجامعه","الامام محمد عبده","امام عبده","شربيين","السنبلاوين"],"زهران":["العجمى","المعمورة","المنصوره","دمنهور","زيزينيا","سموحة","طنطا","المحله","الزقازيق","التجمع الخامس","الفراعنة","زايد","مدينتي","دمياط","سوريا","الرحاب","العلمين","أمواج","بدر","كرير","مراسي","منتجع ديونز","قرية مارينا 2","ماستر","منتجع ديونز","الماظه باى"]};
+
+const TEMPLATE_MAP={"كارفور":"carrefour","كارفور اكسبريس":"carrefour","كارفور سايلو":"carrefour","بنده":"bndh","سبينس":"spinney","الفا":"spinney","العثيم":"othym","لولو":"lulu","فتح الله جمله":"fathallah","فتح الله اسواق":"fathallah","فتح الله اسواق مينى":"fathallah"};
+const TEMPLATE_LABELS={carrefour:"كارفور الرسمي",bndh:"بنده",spinney:"سبينس / الفا",othym:"العثيم",lulu:"لولو",fathallah:"فتح الله جملة",general:"قالب عام"};
+const CHAIN_ICONS={"كارفور":"🛒","كارفور اكسبريس":"🛒","بنده":"🏪","سبينس":"🌟","العثيم":"🏬","لولو":"🌺","فتح الله جمله":"🏷️","خير زمان":"✨","مترو":"🚇","أولاد رجب":"🏪","بونجور":"☕","سيركل":"⭕"};
+
+// ─────────────────────── STORE CODES (sample — full data embedded) ───────────────────────
+// For brevity we include key chains; the bot already has full data
+const STORE_CODES = {"201":{"chain":"ايه مارت","branch":"ايه مارت"},"42":{"chain":"ابانوب","branch":"ابانوب"},"1016":{"chain":"كارفور","branch":"CFC"},"1017":{"chain":"كارفور","branch":"الشروق"},"1014":{"chain":"كارفور","branch":"العبور"},"1015":{"chain":"كارفور","branch":"المعادى"},"1013":{"chain":"كارفور","branch":"داندى مول"},"1008":{"chain":"كارفور","branch":"ستى لايت"},"1007":{"chain":"كارفور","branch":"العروبه"},"1006":{"chain":"كارفور","branch":"طنطا"},"1018":{"chain":"كارفور","branch":"محرم بك"},"1032":{"chain":"سبينس","branch":"الدقى"},"1033":{"chain":"سبينس","branch":"الزمالك"},"1056":{"chain":"لولو","branch":"الحمد"},"1009":{"chain":"لولو","branch":"التجمع الاول"},"7031":{"chain":"بنده","branch":"Qaha (اسكندرية الزراعى)"},"1252":{"chain":"بنده","branch":"اكتوبر"},"1250":{"chain":"بنده","branch":"العبور"},"1251":{"chain":"بنده","branch":"مكرم عبيد"},"7155":{"chain":"العثيم","branch":"15 مايو"},"7161":{"chain":"العثيم","branch":"الدقى"},"7143":{"chain":"العثيم","branch":"عين شمس"},"1259":{"chain":"فتح الله جمله","branch":"ragheb- كرموز"},"1206":{"chain":"فتح الله جمله","branch":"الابراهيميه"},"1086":{"chain":"فتح الله جمله","branch":"الزيتون"},"K1018":{"chain":"كازيون","branch":"احمد اسماعيل"},"K1047":{"chain":"كازيون","branch":"صعب صالح"},"7232":{"chain":"لولو","branch":"التجمع الخامس"},"7140":{"chain":"لولو","branch":"شيراتون"},"3302":{"chain":"لولو","branch":"المحكمه"},"1247":{"chain":"كارفور اكسبريس","branch":"15 مايو"},"1044":{"chain":"كارفور اكسبريس","branch":"الجزيرة مول"},"1046":{"chain":"كارفور اكسبريس","branch":"الجزائر"},"7046":{"chain":"كارفور اكسبريس","branch":"الرحاب"},"1195":{"chain":"كارفور اكسبريس","branch":"جرين بلازا"},"1047":{"chain":"كارفور اكسبريس","branch":"حلوان"},"1057":{"chain":"كارفور اكسبريس","branch":"داون تاون"},"7039":{"chain":"كارفور","branch":"الغردقه"},"7040":{"chain":"كارفور","branch":"مدينتى"},"1253":{"chain":"كارفور","branch":"مول مصر"},"2690":{"chain":"كارفور سايلو","branch":"العبور"},"2802":{"chain":"كارفور سايلو","branch":"الواحات"}};
+
+// ─────────────────────── AUTH ───────────────────────
+let USERS = JSON.parse(localStorage.getItem('adhoc_users') || 'null') || [
+  {username:'asalim',password:'101986',displayName:'Ahmed Salim',role:'admin',active:true},
+  {username:'user1',password:'1234',displayName:'مستخدم عام',role:'user',active:true}
+];
+
+let currentUser = null;
+let navStack = ['login-screen'];
+
+// ─────────────────────── STATE ───────────────────────
+let state = {};
+let historyData = JSON.parse(localStorage.getItem('adhoc_history') || '[]');
+let charts = {};
+let customTemplates = JSON.parse(localStorage.getItem('adhoc_custom_templates')||'{}');
+
+// ─────────────────────── NAV ───────────────────────
+function goTo(id) {
+  const cur = navStack[navStack.length-1];
+  document.getElementById(cur)?.classList.add('slide-back');
+  setTimeout(()=>document.getElementById(cur)?.classList.add('hidden'),300);
+  const el = document.getElementById(id);
+  el.classList.remove('hidden','slide-back');
+  navStack.push(id);
+}
+function goBack() {
+  if(navStack.length<=1) return;
+  const cur = navStack.pop();
+  document.getElementById(cur)?.classList.add('hidden');
+  const prev = navStack[navStack.length-1];
+  document.getElementById(prev)?.classList.remove('hidden','slide-back');
+}
+function showOnly(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
+  document.getElementById(id)?.classList.remove('hidden');
+  navStack = [id];
+}
+
+// ─────────────────────── LOGIN ───────────────────────
+function doLogin() {
+  const u = document.getElementById('login-user').value.trim();
+  const p = document.getElementById('login-pass').value.trim();
+  const user = USERS.find(x=>x.username===u && x.password===p && x.active);
+  if(!user){
+    document.getElementById('login-err').classList.add('show');
+    document.getElementById('login-pass').classList.add('error');
+    return;
+  }
+  document.getElementById('login-err').classList.remove('show');
+  currentUser = user;
+  initHome();
+  showOnly('home-screen');
+}
+
+document.getElementById('login-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
+
+function logout() {
+  currentUser = null;
+  showOnly('login-screen');
+  document.getElementById('login-pass').value='';
+}
+
+// ─────────────────────── HOME ───────────────────────
+function initHome() {
+  const badge = document.getElementById('home-user-badge');
+  badge.innerHTML = `<div class="user-badge"><div class="user-avatar">${currentUser.displayName[0]}</div><div><div class="user-name">${currentUser.displayName}</div><div class="user-role">${currentUser.role==='admin'?'مدير النظام':'مستخدم'}</div></div></div>`;
+  document.getElementById('admin-btn').style.display = currentUser.role==='admin'?'flex':'none';
+  updateStats();
+  updateAdminData();
+}
+
+function updateStats() {
+  const today = new Date().toDateString();
+  const month = new Date().getMonth();
+  const myHistory = currentUser.role==='admin' ? historyData : historyData.filter(d=>d.createdBy===currentUser.username);
+  const todayCount = myHistory.filter(d=>new Date(d.createdAt).toDateString()===today).length;
+  const monthCount = myHistory.filter(d=>new Date(d.createdAt).getMonth()===month).length;
+  document.getElementById('s-today').textContent = todayCount;
+  document.getElementById('s-month').textContent = monthCount;
+  document.getElementById('s-total').textContent = myHistory.length;
+}
+
+// ─────────────────────── CODE LOOKUP ───────────────────────
+function codeInput(v) {
+  if(!v.trim()) document.getElementById('code-result').classList.remove('show');
+}
+function lookupCode() {
+  const code = document.getElementById('store-code').value.trim();
+  if(!code) return;
+  const result = STORE_CODES[code] || STORE_CODES[code.toUpperCase()];
+  const el = document.getElementById('code-result');
+  if(result) {
+    document.getElementById('code-chain-name').textContent = '🏪 ' + result.chain;
+    document.getElementById('code-branch-name').textContent = '📍 ' + result.branch;
+    el.classList.add('show');
+    el.dataset.chain = result.chain;
+    el.dataset.branch = result.branch;
+  } else {
+    el.classList.remove('show');
+    toast('❌ كود غير معروف: ' + code);
+  }
+}
+function useCodeResult() {
+  const el = document.getElementById('code-result');
+  state.chain = el.dataset.chain;
+  state.branch = el.dataset.branch;
+  openForm();
+}
+
+// ─────────────────────── NEW DELEGATION ───────────────────────
+function startNew() {
+  state = {};
+  document.getElementById('store-code').value = '';
+  document.getElementById('code-result').classList.remove('show');
+  goTo('code-screen');
+}
+
+// ─────────────────────── CHAINS ───────────────────────
+const allChains = Object.keys(CHAINS_DATA).sort((a,b)=>a.localeCompare(b,'ar'));
+function renderChains(list) {
+  const el = document.getElementById('chains-list');
+  document.getElementById('chain-count-sub').textContent = list.length + ' سلسلة';
+  if(!list.length){el.innerHTML='<div class="empty"><div class="empty-icon">🔍</div>لا توجد نتائج</div>';return}
+  el.innerHTML = list.map(c=>`
+    <div class="list-item" onclick="selectChain('${c.replace(/'/g,"\\'")}')">
+      <div class="list-icon">${CHAIN_ICONS[c]||'🏬'}</div>
+      <div style="flex:1"><div class="list-name">${c}</div><div class="list-sub">${CHAINS_DATA[c].length} فرع</div></div>
+      <span class="list-arrow">←</span>
+    </div>`).join('');
+}
+function filterChains(q){renderChains(q?allChains.filter(c=>c.includes(q)):allChains)}
+function selectChain(c){state.chain=c;renderBranches(CHAINS_DATA[c]);document.getElementById('branch-chain-sub').textContent=c+' — '+CHAINS_DATA[c].length+' فرع';document.getElementById('branch-search').value='';goTo('branch-screen')}
+
+// ─────────────────────── BRANCHES ───────────────────────
+function renderBranches(list){
+  const el=document.getElementById('branches-list');
+  if(!list.length){el.innerHTML='<div class="empty"><div class="empty-icon">📍</div>لا توجد فروع</div>';return}
+  el.innerHTML=list.map(b=>`<div class="list-item" onclick="selectBranch('${b.replace(/'/g,"\\'")}')"><div class="list-icon">📍</div><div class="list-name" style="flex:1">${b}</div><span class="list-arrow">←</span></div>`).join('')
+}
+function filterBranches(q){renderBranches(q?CHAINS_DATA[state.chain].filter(b=>b.includes(q)):CHAINS_DATA[state.chain])}
+function selectBranch(b){state.branch=b;openForm()}
+function openForm(){
+  document.getElementById('form-location-sub').textContent=state.chain+' / '+state.branch;
+  document.getElementById('form-chain-val').textContent=state.chain;
+  document.getElementById('form-branch-val').textContent=state.branch;
+  const t=TEMPLATE_MAP[state.chain]||'general';
+  document.getElementById('products-group').style.display=['carrefour','spinney','lulu','general'].includes(t)?'block':'none';
+  
+  // Show insurance field for specific chains
+  const needsInsurance = ['فتح الله جمله','فتح الله اسواق','فتح الله اسواق مينى'].includes(state.chain);
+  document.getElementById('insurance-group').style.display = needsInsurance?'block':'none';
+  
+  const d=new Date(),d2=new Date(d);d2.setFullYear(d2.getFullYear()+1);
+  document.getElementById('f-from').value=fmt(d);
+  document.getElementById('f-to').value=fmt(d2);
+  document.getElementById('f-name').value='';
+  document.getElementById('f-id').value='';
+  document.getElementById('f-products').value='';
+  document.getElementById('f-insurance').value='';
+  ['err-name','err-id','err-from','err-to','err-insurance'].forEach(id=>{const e=document.getElementById(id);e.textContent='';e.classList.remove('show')});
+  document.getElementById('dup-warning').style.display='none';
+  goTo('form-screen');
+}
+function fmt(d){return`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`}
+
+// ─────────────────────── VALIDATION ───────────────────────
+function normalizeDigits(s){return s.replace(/[٠-٩]/g,c=>c.charCodeAt(0)-0x660).replace(/[۰-۹]/g,c=>c.charCodeAt(0)-0x6F0)}
+function showErr(id,msg){const e=document.getElementById(id);e.textContent=msg;e.classList.add('show');return false}
+function clearErr(id){const e=document.getElementById(id);e.textContent='';e.classList.remove('show')}
+
+function validateForm(){
+  let ok=true;
+  ['err-name','err-id','err-from','err-to'].forEach(clearErr);
+
+  // Name: Arabic only, 4+ words
+  const name=document.getElementById('f-name').value.trim();
+  if(!name){showErr('err-name','⚠️ الاسم مطلوب');ok=false}
+  else if(!/^[\u0600-\u06FF\s]+$/.test(name)){showErr('err-name','⚠️ الاسم يجب أن يكون بالعربية فقط بدون أرقام أو رموز');ok=false}
+  else if(name.trim().split(/\s+/).filter(Boolean).length<4){showErr('err-name','⚠️ الاسم يجب أن يكون رباعياً على الأقل (4 كلمات)');ok=false}
+
+  // ID: 14 digits
+  const rawId=document.getElementById('f-id').value.trim();
+  const normId=normalizeDigits(rawId);
+  if(!normId){showErr('err-id','⚠️ رقم البطاقة مطلوب');ok=false}
+  else if(!/^\d{14}$/.test(normId)){showErr('err-id','⚠️ رقم البطاقة يجب أن يكون 14 رقماً بالضبط');ok=false}
+  else document.getElementById('f-id').value=normId;
+
+  // Dates
+  const from=document.getElementById('f-from').value.trim();
+  const to=document.getElementById('f-to').value.trim();
+  if(!from){showErr('err-from','⚠️ تاريخ البداية مطلوب');ok=false}
+  if(!to){showErr('err-to','⚠️ تاريخ النهاية مطلوب');ok=false}
+  if(from&&to){
+    const parseDate=s=>{const[d,m,y]=s.split('/');return new Date(+y,+m-1,+d)};
+    if(parseDate(to)<=parseDate(from)){showErr('err-to','⚠️ تاريخ النهاية يجب أن يكون بعد تاريخ البداية');ok=false}
+  }
+
+  // Duplicate check
+  if(ok){
+    const myH=historyData.filter(d=>d.createdBy===currentUser.username);
+    const dup=myH.find(d=>d.name===name&&d.chain===state.chain&&d.branch===state.branch);
+    if(dup) document.getElementById('dup-warning').style.display='block';
+    else document.getElementById('dup-warning').style.display='none';
+  }
+  return ok;
+}
+
+// ─────────────────────── PREVIEW ───────────────────────
+function goToPreview(){
+  if(!validateForm()) return;
+  state.name=document.getElementById('f-name').value.trim();
+  state.id=normalizeDigits(document.getElementById('f-id').value.trim());
+  state.from=document.getElementById('f-from').value.trim();
+  state.to=document.getElementById('f-to').value.trim();
+  state.products=document.getElementById('f-products').value.trim();
+  state.insurance=document.getElementById('f-insurance').value.trim();
+  const tmpl=TEMPLATE_MAP[state.chain]||'general';
+  document.getElementById('preview-tmpl-sub').textContent='قالب: '+TEMPLATE_LABELS[tmpl];
+  document.getElementById('rv-chain').textContent=state.chain;
+  document.getElementById('rv-branch').textContent=state.branch;
+  document.getElementById('rv-name').textContent=state.name;
+  document.getElementById('rv-id').textContent=state.id;
+  document.getElementById('rv-period').textContent=state.from+' → '+state.to;
+  document.getElementById('preview-content').innerHTML=buildDelegation(tmpl);
+  goTo('preview-screen');
+}
+
+// ─────────────────────── TEMPLATES ───────────────────────
+function buildDelegation(tmpl){
+  // Use custom template if exists
+  if(customTemplates && customTemplates[tmpl]){
+    const{chain,branch,name,id,from,to,products=''}=state;
+    return customTemplates[tmpl]
+      .replace(/\[السلسلة\]/g,chain).replace(/\[الفرع\]/g,branch)
+      .replace(/\[اسم المنسق\]/g,name).replace(/\[رقم البطاقة\]/g,id)
+      .replace(/\[من\]/g,from).replace(/\[إلى\]/g,to).replace(/\[المنتجات\]/g,products||'');
+  }
+  const{chain,branch,name,id,from,to,products}=state;
+  const T={
+    carrefour:`<div class="delegation-preview">
+      <div class="prev-company">شركة ادهوك للتسويق</div>
+      <div class="prev-title">تفويض</div><div class="prev-line"></div>
+      <p class="prev-para">فوضنا نحن شركة ادهوك للتسويق</p>
+      <div class="prev-field"><span class="prev-key">المندوب / المنسق :</span><span class="prev-val">${name}</span></div>
+      <div class="prev-field"><span class="prev-key">بطاقة رقم :</span><span class="prev-val">${id}</span></div>
+      <div class="prev-field"><span class="prev-key">للعمل داخل :</span><span class="prev-val">${chain} / فرع ${branch}</span></div>
+      <div class="prev-field"><span class="prev-key">في الفترة من :</span><span class="prev-val">${from} حتى ${to}</span></div>
+      ${products?`<div class="prev-field"><span class="prev-key">على منتجات :</span><span class="prev-val">${products}</span></div>`:''}
+      <p class="prev-para">و الشركة مسئولة مسئولية كاملة عن كامل تصرفات المندوب داخل ${chain} مسئولية التابع لمتبوعيه، و ينتهى هذا التفويض بانتهاء المدة المحددة او باخطار رسمى كتابى يسلم لإدارة الموارد البشرية.</p>
+      <p class="prev-para">وهذا تفويض منا بذلك</p>
+      <div class="prev-sigs"><div class="prev-sig"><div class="prev-sig-line"></div>ختم الشركة</div><div class="prev-sig"><div class="prev-sig-line"></div>توقيع المدير المسئول</div></div></div>`,
+    bndh:`<div class="delegation-preview">
+      <div class="prev-company">شركة ادهوك للتسويق</div>
+      <div class="prev-title">تفويض</div><div class="prev-line"></div>
+      <p class="prev-para">تقر شركة ادهوك للتسويق بأنها تتحمل المسئولية كاملة عن:</p>
+      <div class="prev-field"><span class="prev-key">المنسق :</span><span class="prev-val">${name}</span></div>
+      <div class="prev-field"><span class="prev-key">فرع :</span><span class="prev-val">${chain} / ${branch}</span></div>
+      <div class="prev-field"><span class="prev-key">بطاقة رقم :</span><span class="prev-val">${id}</span></div>
+      <div class="prev-field"><span class="prev-key">التاريخ من :</span><span class="prev-val">${from}</span></div>
+      <div class="prev-field"><span class="prev-key">إلى :</span><span class="prev-val">${to}</span></div>
+      <p class="prev-para">في أي ملابسات أو مشكلات أو شكاوى قد يتسبب فيها المندوب أثناء عمله بالفرع بالإضافة إلى إصابات العمل. والشركة مسئولة عن المندوب أمام أي جهة حكومية وإدارة التأمينات.</p>
+      <div class="prev-sigs"><div class="prev-sig"><div class="prev-sig-line"></div>ختم الشركة</div><div class="prev-sig"><div class="prev-sig-line"></div>توقيع المدير</div></div></div>`,
+    spinney:`<div class="delegation-preview">
+      <div class="prev-company">شركة ادهوك للأبحاث التسويقية</div>
+      <div class="prev-title">تفويض</div><div class="prev-line"></div>
+      <div class="prev-field"><span class="prev-key">فوضنا نحن شركة :</span><span class="prev-val">ادهوك للأبحاث التسويقية</span></div>
+      <div class="prev-field"><span class="prev-key">سجل تجارى رقم :</span><span class="prev-val">29520</span></div>
+      <div class="prev-field"><span class="prev-key">بطاقة ضريبية :</span><span class="prev-val">277-013-272</span></div>
+      <div class="prev-field"><span class="prev-key">السيد / المنسق :</span><span class="prev-val">${name}</span></div>
+      <div class="prev-field"><span class="prev-key">رقم البطاقة :</span><span class="prev-val">${id}</span></div>
+      <div class="prev-field"><span class="prev-key">للعمل لدى :</span><span class="prev-val">${chain} (${branch})</span></div>
+      <div class="prev-field"><span class="prev-key">من تاريخ :</span><span class="prev-val">${from} حتى ${to}</span></div>
+      ${products?`<div class="prev-field"><span class="prev-key">على منتجات :</span><span class="prev-val">${products}</span></div>`:''}
+      <p class="prev-para">مسئولية المتبوع عن أعمال تابعيه. وتتعهد الشركة بإخطاركم حال انتهاء عمل المندوب. المنسق جاري التأمين عليه من قبل الشركة.</p>
+      <div class="prev-sigs"><div class="prev-sig"><div class="prev-sig-line"></div>المدير المسئول</div><div class="prev-sig"><div class="prev-sig-line"></div>ختم الشركة</div></div></div>`,
+    othym:`<div class="delegation-preview">
+      <div class="prev-company">شركة ادهوك للتسويق</div>
+      <div class="prev-title">تفويض</div><div class="prev-line"></div>
+      <p class="prev-para">السادة / شركة عبدالله العثيم &nbsp; فرع: ${branch}</p>
+      <div class="prev-field"><span class="prev-key">فوضنا نحن شركة :</span><span class="prev-val">ادهوك</span></div>
+      <div class="prev-field"><span class="prev-key">سجل تجارى رقم :</span><span class="prev-val">29520</span></div>
+      <div class="prev-field"><span class="prev-key">السيد :</span><span class="prev-val">${name}</span></div>
+      <div class="prev-field"><span class="prev-key">بطاقة شخصية رقم :</span><span class="prev-val">${id}</span></div>
+      <div class="prev-field"><span class="prev-key">في الفترة من :</span><span class="prev-val">${from} إلى ${to}</span></div>
+      <p class="prev-para">في التواجد طرفكم كمندوب عن شركتنا، مسئولية المتبوع عن أعمال تابعيه. وتتعهد الشركة بإخطاركم حال انتهاء عمل المندوب.</p>
+      <div class="prev-sigs"><div class="prev-sig"><div class="prev-sig-line"></div>الاسم والتوقيع</div><div class="prev-sig"><div class="prev-sig-line"></div>ختم الشركة</div></div></div>`,
+    lulu:`<div class="delegation-preview">
+      <div class="prev-company">شركة ادهوك للأبحاث التسويقية</div>
+      <div class="prev-title">تفويض</div><div class="prev-line"></div>
+      <p class="prev-para">فوضنا نحن شركة ادهوك للأبحاث التسويقية بناءً على طلب من شركة لولو</p>
+      <div class="prev-field"><span class="prev-key">المنسق :</span><span class="prev-val">${name}</span></div>
+      <div class="prev-field"><span class="prev-key">بطاقة رقم :</span><span class="prev-val">${id}</span></div>
+      <div class="prev-field"><span class="prev-key">للعمل فرع لولو :</span><span class="prev-val">${branch}</span></div>
+      <div class="prev-field"><span class="prev-key">من تاريخ :</span><span class="prev-val">${from} حتى ${to}</span></div>
+      ${products?`<div class="prev-field"><span class="prev-key">منتجات :</span><span class="prev-val">${products}</span></div>`:''}
+      <p class="prev-para" style="text-align:center">لدى سيادتكم بالفرع. وهذا تفويض منا بذلك. ولكم جزيل الشكر</p>
+      <div class="prev-sigs"><div class="prev-sig"><div class="prev-sig-line"></div>المدير المسئول</div></div></div>`,
+    fathallah:`<div class="delegation-preview">
+      <div class="prev-company">شركة ادهوك للأبحاث التسويقية</div>
+      <div class="prev-title">تفويض مندوب 2025</div><div class="prev-line"></div>
+      <div class="prev-field"><span class="prev-key">فوضنا نحن شركة :</span><span class="prev-val">ادهوك للأبحاث التسويقية</span></div>
+      <div class="prev-field"><span class="prev-key">المنسق / المندوب :</span><span class="prev-val">${name}</span></div>
+      <div class="prev-field"><span class="prev-key">رقم قومى :</span><span class="prev-val">${id}</span></div>
+      <div class="prev-field"><span class="prev-key">رقم التأميني :</span><span class="prev-val">234657</span></div>
+      <div class="prev-field"><span class="prev-key">رقم المنشأة التأميني :</span><span class="prev-val">2241159</span></div>
+      <div class="prev-field"><span class="prev-key">سارى حتى تاريخ :</span><span class="prev-val">${to}</span></div>
+      <p class="prev-para">وذلك لعرض وتسويق منتجات الشركة داخل فروع ${chain} (${branch})، وتُقر شركة ادهوك بأنها تتحمل المسئولية كاملة عن المنسق في أي ملابسات أو غرامات من هيئة التأمينات. وهذا تفويض منا بذلك.</p>
+      <div class="prev-sigs"><div class="prev-sig"><div class="prev-sig-line"></div>المشرف</div><div class="prev-sig"><div class="prev-sig-line"></div>المدير</div><div class="prev-sig"><div class="prev-sig-line"></div>ختم الشركة</div></div></div>`,
+    general:`<div class="delegation-preview">
+      <div class="prev-company">شركة ادهوك للأبحاث التسويقية</div>
+      <div class="prev-title">تفويض</div><div class="prev-line"></div>
+      <p class="prev-para">فوضنا نحن شركة ادهوك للأبحاث التسويقية</p>
+      <div class="prev-field"><span class="prev-key">المنسق :</span><span class="prev-val">${name}</span></div>
+      <div class="prev-field"><span class="prev-key">بطاقة رقم :</span><span class="prev-val">${id}</span></div>
+      <div class="prev-field"><span class="prev-key">للعمل بفرع :</span><span class="prev-val">${branch} - ${chain}</span></div>
+      <div class="prev-field"><span class="prev-key">في الفترة من :</span><span class="prev-val">${from}</span></div>
+      <div class="prev-field"><span class="prev-key">إلى :</span><span class="prev-val">${to}</span></div>
+      ${products?`<div class="prev-field"><span class="prev-key">لمباشرة أعمال :</span><span class="prev-val">${products}</span></div>`:''}
+      <p class="prev-para" style="text-align:center">لدى سيادتكم بالفرع. وهذا تفويض منا بذلك. ولكم جزيل الشكر</p>
+      <div class="prev-sigs"><div class="prev-sig"><div class="prev-sig-line"></div>المدير المسئول</div><div class="prev-sig"><div class="prev-sig-line"></div>ختم الشركة</div></div></div>`
+  };
+  return T[tmpl]||T.general;
+}
+
+// ─────────────────────── SAVE / PRINT ───────────────────────
+function createRecord(){
+  return{
+    id:'del_'+Date.now(),
+    ...state,
+    createdBy:currentUser.username,
+    createdByName:currentUser.displayName,
+    createdAt:new Date().toISOString(),
+    template:TEMPLATE_MAP[state.chain]||'general'
+  };
+}
+function saveRecord(rec){
+  historyData.unshift(rec);
+  if(historyData.length>500) historyData=historyData.slice(0,500);
+  localStorage.setItem('adhoc_history',JSON.stringify(historyData));
+  updateStats();
+}
+function printAndSave(){
+  const rec=createRecord();
+  saveRecord(rec);
+  printPreview();
+  toast('✅ تم الحفظ والإرسال للطباعة');
+}
+function saveOnly(){
+  const rec=createRecord();
+  saveRecord(rec);
+  toast('✅ تم حفظ التفويض في السجل');
+  goTo('history-screen');
+  renderHistory(historyData);
+}
+function printPreview(){
+  const content=document.getElementById('preview-content').innerHTML;
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>تفويض - ${state.name}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Cairo',sans-serif;direction:rtl;padding:24px;background:white;color:#1a1a2e}
+  .delegation-preview{font-size:14px;line-height:1.9}
+  .prev-company{font-size:13px;text-align:center;color:#555;margin-bottom:14px}
+  .prev-title{font-size:22px;font-weight:900;text-align:center;margin-bottom:4px}
+  .prev-line{border-bottom:2px solid #1a1a2e;margin-bottom:14px}
+  .prev-field{display:flex;gap:8px;margin-bottom:8px;font-weight:600}
+  .prev-key{color:#555;min-width:140px;flex-shrink:0}
+  .prev-val{font-weight:700}
+  .prev-para{margin:10px 0;line-height:1.8}
+  .prev-sigs{display:flex;justify-content:space-around;margin-top:50px}
+  .prev-sig{text-align:center;font-weight:700;font-size:13px}
+  .prev-sig-line{width:110px;border-bottom:1.5px solid #1a1a2e;margin:0 auto 10px;height:40px}
+  @media print{body{padding:10px}}</style></head><body>${content}</body></html>`);
+  w.document.close();setTimeout(()=>w.print(),500);
+}
+
+// ─────────────────────── HISTORY ───────────────────────
+function getMyHistory(){
+  return currentUser.role==='admin'?historyData:historyData.filter(d=>d.createdBy===currentUser.username);
+}
+function renderHistory(list){
+  const el=document.getElementById('history-list');
+  document.getElementById('history-sub').textContent=list.length+' تفويض';
+  if(!list.length){el.innerHTML='<div class="empty"><div class="empty-icon">📭</div>لا توجد تفويضات</div>';return}
+  const now=new Date();
+  el.innerHTML=list.map(d=>{
+    const expiry=parseDate(d.to);
+    const isActive=expiry>now;
+    const diff=Math.floor((expiry-now)/86400000);
+    const statusClass=isActive?(diff<=30?'soon':'active'):'expired';
+    const statusLabel=isActive?(diff<=30?'⚠️ ينتهي قريباً':'✅ ساري'):'❌ منتهي';
+    return`<div class="history-card">
+      <div class="history-head"><div class="history-name">👤 ${d.name}</div><div class="history-date">${new Date(d.createdAt).toLocaleDateString('ar-EG')}</div></div>
+      <div style="font-size:13px;color:var(--accent)">🏪 ${d.chain}</div>
+      <div class="history-meta">
+        <span class="chip">📍 ${d.branch}</span>
+        <span class="chip ${statusClass}">${statusLabel}</span>
+        ${currentUser.role==='admin'?`<span class="chip">👤 ${d.createdByName||d.createdBy}</span>`:''}
+      </div>
+      <div class="history-actions">
+        <button class="btn btn-secondary btn-sm" onclick="reprintRecord('${d.id}')">🖨️ إعادة طباعة</button>
+        <button class="btn btn-secondary btn-sm" onclick="shareRecord('${d.id}')">↗️ مشاركة</button>
+        ${currentUser.role==='admin'?`<button class="btn btn-primary btn-sm" onclick="exportRecordWord('${d.id}')">📄 Word</button><button class="btn btn-danger btn-sm" onclick="deleteRecord('${d.id}')">🗑️</button>`:''}
+      </div></div>`;
+  }).join('');
+}
+function filterHistory(q){renderHistory(q?getMyHistory().filter(d=>d.name.includes(q)||d.chain.includes(q)||d.branch.includes(q)):getMyHistory())}
+function reprintRecord(id){const d=historyData.find(x=>x.id===id);if(!d)return;state={...d};printPreview()}
+function shareRecord(id){const d=historyData.find(x=>x.id===id);if(!d)return;state={...d};openShareMenu()}
+function exportRecordWord(id){const d=historyData.find(x=>x.id===id);if(!d)return;const savedState={...state};state={...d};exportUpdateAsWord(d);state=savedState;}
+function deleteRecord(id){historyData=historyData.filter(x=>x.id!==id);localStorage.setItem('adhoc_history',JSON.stringify(historyData));renderHistory(getMyHistory());toast('🗑️ تم الحذف')}
+function parseDate(s){const[d,m,y]=s.split('/');return new Date(+y,+m-1,+d)}
+function exportHistory(){
+  const data=getMyHistory();
+  if(!data.length){toast('⚠️ لا توجد تفويضات للتصدير');return;}
+  let csv='\uFEFFاسم المنسق,البطاقة,السلسلة,الفرع,من,إلى,تاريخ الإنشاء,أنشئ بواسطة\n';
+  data.forEach(d=>{
+    csv+=`"${d.name}","${d.id}","${d.chain}","${d.branch}","${d.from}","${d.to}","${new Date(d.createdAt).toLocaleDateString('ar-EG')}","${d.createdByName||d.createdBy}"\n`;
+  });
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='adhoc_delegations_'+new Date().toISOString().split('T')[0]+'.csv';
+  a.click();
+  toast('✅ تم تصدير التفويضات كـ Excel');
+}
+
+// ─────────────────────── ANALYTICS ───────────────────────
+let chartsInited=false;
+function initAnalytics(){
+  const all=getMyHistory();
+  const now=new Date();
+
+  // KPIs
+  const today=all.filter(d=>new Date(d.createdAt).toDateString()===now.toDateString()).length;
+  const week=all.filter(d=>(now-new Date(d.createdAt))<7*86400000).length;
+  const month=all.filter(d=>new Date(d.createdAt).getMonth()===now.getMonth()).length;
+  const active=all.filter(d=>parseDate(d.to)>now).length;
+  const expired=all.filter(d=>parseDate(d.to)<=now).length;
+  const soon=all.filter(d=>{const diff=(parseDate(d.to)-now)/86400000;return diff>0&&diff<=30}).length;
+
+  document.getElementById('kpi-grid').innerHTML=`
+    <div class="kpi-card"><div class="kpi-num orange">${today}</div><div class="kpi-label">اليوم</div></div>
+    <div class="kpi-card"><div class="kpi-num orange">${week}</div><div class="kpi-label">هذا الأسبوع</div></div>
+    <div class="kpi-card"><div class="kpi-num orange">${month}</div><div class="kpi-label">هذا الشهر</div></div>
+    <div class="kpi-card"><div class="kpi-num orange">${all.length}</div><div class="kpi-label">الإجمالي</div></div>
+    <div class="kpi-card"><div class="kpi-num green">${active}</div><div class="kpi-label">سارية</div></div>
+    <div class="kpi-card"><div class="kpi-num red">${expired}</div><div class="kpi-label">منتهية</div></div>`;
+
+  // Daily chart
+  const days=[];const dayCounts=[];
+  for(let i=6;i>=0;i--){const d=new Date(now);d.setDate(d.getDate()-i);days.push(d.toLocaleDateString('ar-EG',{weekday:'short'}));dayCounts.push(all.filter(x=>new Date(x.createdAt).toDateString()===d.toDateString()).length)}
+  renderChart('chart-daily','line',days,dayCounts,'التفويضات اليومية','#ff6b35');
+
+  // Chains chart
+  const chainCount={};all.forEach(d=>{chainCount[d.chain]=(chainCount[d.chain]||0)+1});
+  const topChains=Object.entries(chainCount).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  renderChart('chart-chains','bar',topChains.map(x=>x[0].substring(0,8)),topChains.map(x=>x[1]),'أكثر السلاسل','#ff4081');
+
+  // Status pie
+  renderPieChart('chart-status',['سارية','منتهية','تنتهي قريباً'],[active,expired,soon],['#22c55e','#ef4444','#f59e0b']);
+}
+
+function renderChart(id,type,labels,data,label,color){
+  const ctx=document.getElementById(id);if(!ctx)return;
+  if(charts[id])charts[id].destroy();
+  charts[id]=new Chart(ctx,{type,data:{labels,datasets:[{label,data,backgroundColor:color+'33',borderColor:color,borderWidth:2,tension:.4,fill:type==='line',borderRadius:type==='bar'?6:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#888',font:{size:10}},grid:{color:'#2e2e2e'}},y:{ticks:{color:'#888',font:{size:10}},grid:{color:'#2e2e2e'}}}}})}
+
+function renderPieChart(id,labels,data,colors){
+  const ctx=document.getElementById(id);if(!ctx)return;
+  if(charts[id])charts[id].destroy();
+  charts[id]=new Chart(ctx,{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:colors}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#888',font:{size:11},padding:12}}}}})}
+
+function exportAnalytics(){toast('📥 لتصدير التقارير استخدم زر التاريخ')}
+
+// ─────────────────────── ADMIN ───────────────────────
+function updateAdminData(){
+  document.getElementById('admin-total').textContent=historyData.length;
+  renderUsers();
+  renderAdminUpdatesTwoLists();
+}
+function renderUsers(){
+  const el=document.getElementById('users-list');
+  if(!el)return;
+  el.innerHTML=USERS.map(u=>`
+    <div class="admin-item">
+      <div>
+        <div class="admin-item-text">${u.displayName} <span style="color:var(--accent);font-size:12px">${u.role==='admin'?'(مدير)':''}</span></div>
+        <div class="admin-item-sub">@${u.username}</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="toggle ${u.active?'on':''}" onclick="toggleUser('${u.username}')"></button>
+      </div>
+    </div>`).join('');
+}
+function toggleUser(username){
+  if(username===currentUser.username){toast('⚠️ لا يمكن تعطيل حسابك الحالي');return}
+  const u=USERS.find(x=>x.username===username);if(u){u.active=!u.active;saveUsers();renderUsers()}
+}
+function saveUsers(){localStorage.setItem('adhoc_users',JSON.stringify(USERS))}
+function openAddUser(){openModal('add-user-modal');document.getElementById('new-username').value='';document.getElementById('new-password').value='';document.getElementById('new-displayname').value=''}
+function addUser(){
+  const u=document.getElementById('new-username').value.trim();
+  const p=document.getElementById('new-password').value.trim();
+  const n=document.getElementById('new-displayname').value.trim();
+  if(!u||!p||!n){toast('⚠️ أكمل جميع الحقول');return}
+  if(USERS.find(x=>x.username===u)){toast('❌ اسم المستخدم موجود مسبقاً');return}
+  USERS.push({username:u,password:p,displayName:n,role:'user',active:true});
+  saveUsers();renderUsers();closeModal('add-user-modal');toast('✅ تم إضافة المستخدم');
+}
+function exportDB(){const data=JSON.stringify({history:historyData,users:USERS},null,2);const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(data);a.download='adhoc_db_'+new Date().toISOString().split('T')[0]+'.json';a.click();toast('✅ تم تصدير قاعدة البيانات')}
+function importDB(){document.getElementById('import-file').click()}
+function handleImport(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(d.history){historyData=d.history;localStorage.setItem('adhoc_history',JSON.stringify(historyData))}if(d.users){USERS=d.users;saveUsers()}updateStats();renderUsers();toast('✅ تم الاستيراد بنجاح')}catch{toast('❌ ملف غير صالح')}};r.readAsText(f);
+}
+function deleteClientsFromMainData(){
+  if(!confirm('⚠️ سيتم حذف كل العملاء المضافين من الداتا الرئيسية. هل أنت متأكد؟')) return;
+  customBranches.forEach(b=>{
+    if(CHAINS_DATA[b.chain]){
+      CHAINS_DATA[b.chain] = CHAINS_DATA[b.chain].filter(br=>br!==b.branch);
+      if(CHAINS_DATA[b.chain].length===0) delete CHAINS_DATA[b.chain];
+    }
+    delete STORE_CODES[b.code];
+  });
+  customBranches=[];
+  localStorage.setItem('adhoc_custom_branches','[]');
+  updateAdminCounts();
+  toast('🗑️ تم حذف العملاء من الداتا الرئيسية');
+}
+
+function clearDelegationsOnly(){
+  if(!confirm('⚠️ سيتم حذف كل سجل التفويضات فقط. هل أنت متأكد؟')) return;
+  historyData=[];
+  localStorage.setItem('adhoc_history','[]');
+  updateStats();
+  toast('🗑️ تم حذف سجل التفويضات');
+}
+
+function openClearDialog(){
+  const choice = confirm('اختر نوع الحذف:\n\nOK = حذف المضاف يدوياً فقط\nCancel = حذف كل البيانات (قديم + جديد)');
+  if(choice){
+    customBranches=[];
+    localStorage.setItem('adhoc_custom_branches','[]');
+    rebuildOriginalData();
+    toast('🗑️ تم حذف الفروع المضافة يدوياً');
+  } else {
+    if(!confirm('⚠️ سيتم حذف كل البيانات (الأصلية + المضافة). هل أنت متأكد؟')) return;
+    customBranches=[];
+    historyData=[];
+    localStorage.setItem('adhoc_custom_branches','[]');
+    localStorage.setItem('adhoc_history','[]');
+    rebuildOriginalData();
+    updateStats();
+    toast('🗑️ تم حذف كل البيانات');
+  }
+  updateAdminCounts();
+}
+
+function rebuildOriginalData(){
+  // This reloads the page to reset CHAINS_DATA and STORE_CODES to original embedded data
+  location.reload();
+}
+
+// ─────────────────────── SHARE ───────────────────────
+function openShareMenu(){document.getElementById('share-menu').classList.add('open')}
+function closeShareMenu(e){if(!e||e.target===document.getElementById('share-menu'))document.getElementById('share-menu').classList.remove('open')}
+
+function downloadWordFile(){
+  const{chain,branch,name}=state;
+  const content=getDelegationHTML();
+  const wordHTML=`<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+    <head><meta charset="UTF-8">
+    <xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom><w:DoNotOptimizeForBrowser/></w:WordDocument></xml>
+    <style>
+    @page{margin:2cm}
+    body{font-family:'Traditional Arabic',Arial,sans-serif;direction:rtl;font-size:14pt;color:#1a1a2e}
+    .delegation-preview{font-size:14pt;line-height:1.8}
+    .prev-company{font-size:12pt;text-align:center;color:#555;margin-bottom:10pt}
+    .prev-title{font-size:18pt;font-weight:bold;text-align:center;margin-bottom:4pt}
+    .prev-line{border-bottom:2pt solid #1a1a2e;margin-bottom:12pt}
+    .prev-field{display:flex;gap:8pt;margin-bottom:6pt;font-weight:bold}
+    .prev-key{color:#444;min-width:130pt}
+    .prev-val{font-weight:bold}
+    .prev-para{margin:8pt 0;line-height:1.8}
+    .prev-sigs{display:flex;justify-content:space-around;margin-top:40pt}
+    .prev-sig{text-align:center;font-weight:bold;font-size:12pt}
+    .prev-sig-line{width:100pt;border-bottom:1pt solid #1a1a2e;margin:0 auto 8pt;height:36pt}
+    </style></head><body>${content}
+    </body></html>`;
+  const blob=new Blob(['\ufeff'+wordHTML],{type:'application/msword;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=`تفويض_${name}_${chain}_${branch}.doc`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function getDelegationHTML(){
+  const tmpl=TEMPLATE_MAP[state.chain]||'general';
+  return buildDelegation(tmpl);
+}
+
+function getDelegationText(){
+  const{chain,branch,name,id,from,to}=state;
+  return `تفويض - شركة ادهوك للتسويق\n${'─'.repeat(35)}\nالمنسق: ${name}\nرقم البطاقة: ${id}\nالسلسلة: ${chain}\nالفرع: ${branch}\nمن تاريخ: ${from}   حتى: ${to}\n${'─'.repeat(35)}\nوهذا تفويض منا بذلك\nAsalim-Adhoc-2026©`;
+}
+
+function shareVia(type){
+  closeShareMenu();
+  const{chain,branch,name,id,from,to}=state;
+  const tmpl=TEMPLATE_MAP[chain]||'general';
+
+  if(type==='pdf'){
+    // Open print window styled for PDF save
+    const content=getDelegationHTML();
+    const w=window.open('','_blank');
+    w.document.write(`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
+    <title>تفويض_${name}_${branch}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Cairo',sans-serif;direction:rtl;padding:28px;background:white;color:#1a1a2e}
+    .delegation-preview{font-size:14px;line-height:1.9}
+    .prev-company{font-size:13px;text-align:center;color:#555;margin-bottom:14px}
+    .prev-title{font-size:22px;font-weight:900;text-align:center;margin-bottom:4px}
+    .prev-line{border-bottom:2px solid #1a1a2e;margin-bottom:14px}
+    .prev-field{display:flex;gap:8px;margin-bottom:8px;font-weight:600}
+    .prev-key{color:#555;min-width:140px;flex-shrink:0}
+    .prev-val{font-weight:700}
+    .prev-para{margin:10px 0;line-height:1.8}
+    .prev-sigs{display:flex;justify-content:space-around;margin-top:50px}
+    .prev-sig{text-align:center;font-weight:700;font-size:13px}
+    .prev-sig-line{width:110px;border-bottom:1.5px solid #1a1a2e;margin:0 auto 10px;height:40px}
+    .watermark{text-align:center;font-size:11px;color:#aaa;margin-top:30px}
+    @media print{body{padding:15px}.no-print{display:none}}
+    </style></head><body>
+    ${content}
+    <div class="no-print" style="text-align:center;margin-top:20px;font-family:Cairo,sans-serif">
+      <p style="color:#555;margin-bottom:10px;font-size:13px">اضغط Ctrl+P أو زر الطباعة واختر "Save as PDF"</p>
+      <button onclick="window.print()" style="background:linear-gradient(135deg,#ff6b35,#ff4081);color:white;border:none;padding:12px 28px;border-radius:10px;font-size:15px;font-family:Cairo,sans-serif;cursor:pointer;font-weight:700">🖨️ حفظ PDF</button>
+    </div>
+    </body></html>`);
+    w.document.close();
+    setTimeout(()=>w.print(),800);
+    return;
+  }
+
+  if(type==='word'){
+    // Generate Word-compatible HTML file (.doc)
+    const content=getDelegationHTML();
+    const wordHTML=`<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+    <head><meta charset="UTF-8">
+    <xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom><w:DoNotOptimizeForBrowser/></w:WordDocument></xml>
+    <style>
+    @page{margin:2cm}
+    body{font-family:'Traditional Arabic',Arial,sans-serif;direction:rtl;font-size:14pt;color:#1a1a2e}
+    .delegation-preview{font-size:14pt;line-height:1.8}
+    .prev-company{font-size:12pt;text-align:center;color:#555;margin-bottom:10pt}
+    .prev-title{font-size:18pt;font-weight:bold;text-align:center;margin-bottom:4pt}
+    .prev-line{border-bottom:2pt solid #1a1a2e;margin-bottom:12pt}
+    .prev-field{display:flex;gap:8pt;margin-bottom:6pt;font-weight:bold}
+    .prev-key{color:#444;min-width:120pt}
+    .prev-val{font-weight:bold}
+    .prev-para{margin:8pt 0;line-height:1.8}
+    .prev-sigs{display:flex;justify-content:space-around;margin-top:40pt}
+    .prev-sig{text-align:center;font-weight:bold;font-size:12pt}
+    .prev-sig-line{width:100pt;border-bottom:1pt solid #1a1a2e;margin:0 auto 8pt;height:36pt}
+    </style></head><body>${content}
+    </body></html>`;
+    const blob=new Blob(['\ufeff'+wordHTML],{type:'application/msword;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download=`تفويض_${name}_${chain}_${branch}.doc`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('✅ تم تحميل ملف Word');
+    return;
+  }
+
+  if(type==='email-choice'){
+    document.getElementById('email-choice-panel').style.display='block';
+    return;
+  }
+  if(type==='gmail'){
+    downloadWordFile();
+    const subj=encodeURIComponent(`تفويض - ${state.name} - ${state.chain} - ${state.branch}`);
+    setTimeout(()=>window.open(`https://mail.google.com/mail/?view=cm&su=${subj}&body=${encodeURIComponent('مرفق ملف التفويض')}`),1200);
+    toast('✅ تم تحميل الملف Word - ارفعه على Gmail');
+    return;
+  }
+  if(type==='outlook'){
+    downloadWordFile();
+    const subj=encodeURIComponent(`تفويض - ${state.name} - ${state.chain} - ${state.branch}`);
+    setTimeout(()=>window.open(`https://outlook.live.com/mail/0/deeplink/compose?subject=${subj}&body=${encodeURIComponent('مرفق ملف التفويض')}`),1200);
+    toast('✅ تم تحميل الملف Word - ارفعه على Outlook');
+    return;
+  }
+  if(type==='email'){
+    downloadWordFile();
+    const subj=encodeURIComponent(`تفويض - ${state.name} - ${state.chain} - ${state.branch}`);
+    setTimeout(()=>window.open(`mailto:?subject=${subj}&body=${encodeURIComponent('مرفق ملف التفويض')}`),1200);
+    toast('✅ تم تحميل الملف Word');
+    return;
+  }
+  if(type==='whatsapp'){
+    downloadWordFile();
+    setTimeout(()=>window.open('https://wa.me/'),1500);
+    toast('✅ تم تحميل الملف - ارفعه على واتساب');
+    return;
+  }
+  if(type==='telegram'){
+    downloadWordFile();
+    setTimeout(()=>window.open('https://t.me'),1500);
+    toast('✅ تم تحميل الملف - ارفعه على تليجرام');
+    return;
+  }
+  if(type==='email'){
+    const text=getDelegationText();
+    window.open('mailto:?subject=تفويض ADHOC - '+name+'&body='+encodeURIComponent(text));
+    return;
+  }
+  if(navigator.share){navigator.share({title:'تفويض ADHOC',text:getDelegationText()}).catch(()=>{})}
+  else{navigator.clipboard?.writeText(getDelegationText());toast('✅ تم النسخ')}
+}
+
+// ─────────────────────── MODAL ───────────────────────
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+
+// ─────────────────────── TOAST ───────────────────────
+let toastTimer;
+function toast(msg,dur=2500){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),dur);
+}
+
+// ─────────────────────── SCREEN HOOKS ───────────────────────
+const origGoTo=goTo;
+window.goTo=function(id){
+  origGoTo(id);
+  if(id==='chain-screen'){renderChains(allChains);document.getElementById('chain-search').value=''}
+  if(id==='history-screen'){renderHistory(getMyHistory());document.getElementById('history-search').value=''}
+  if(id==='analytics-screen'){setTimeout(initAnalytics,100)}
+  if(id==='admin-screen'){updateAdminData()}
+  if(id==='clients-screen'){
+    const isAdmin = currentUser && currentUser.role==='admin';
+    const tabsBar = document.getElementById('clients-tabs-bar');
+    if(tabsBar) tabsBar.style.display = isAdmin ? 'flex' : 'none';
+    if(isAdmin){
+      switchClientsTab('enabled');
+    } else {
+      currentClientsTab = 'enabled';
+      renderClientsList();
+    }
+    document.getElementById('clients-search').value='';
+  }
+};
+
+
+
+// ─── CLIENTS MANAGEMENT ───
+let currentClientsTab = 'enabled';
+
+function switchClientsTab(tab){
+  currentClientsTab = tab;
+  document.getElementById('clients-tab-enabled').style.background = tab==='enabled'?'var(--accent)':'var(--surface2)';
+  document.getElementById('clients-tab-enabled').style.color = tab==='enabled'?'white':'var(--text2)';
+  document.getElementById('clients-tab-disabled').style.background = tab==='disabled'?'var(--accent)':'var(--surface2)';
+  document.getElementById('clients-tab-disabled').style.color = tab==='disabled'?'white':'var(--text2)';
+  renderClientsList();
+}
+
+function renderClientsList(filter=''){
+  const list = customBranches.filter(b => {
+    if(currentClientsTab==='enabled' && !b.enabled) return false;
+    if(currentClientsTab==='disabled' && b.enabled) return false;
+    if(filter && !b.code.includes(filter) && !b.chain.includes(filter) && !b.branch.includes(filter)) return false;
+    return true;
+  });
+  
+  const el = document.getElementById('clients-list');
+  document.getElementById('clients-sub').textContent = `${list.length} فرع`;
+  
+  if(!list.length){
+    el.innerHTML = '<div class="empty"><div class="empty-icon">🏬</div>لا توجد فروع</div>';
+    return;
+  }
+  
+  el.innerHTML = list.map(b => `
+    <div class="list-item" style="display:block;padding:14px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+        <div class="list-icon">${CHAIN_ICONS[b.chain]||'🏬'}</div>
+        <div style="flex:1">
+          <div class="list-name">${b.chain}</div>
+          <div class="list-sub">📍 ${b.branch}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px;direction:ltr;text-align:right">كود: ${b.code}</div>
+        </div>
+        <button class="btn ${b.enabled?'btn-danger':'btn-success'} btn-sm" onclick="toggleBranchEnabled('${b.id}')" style="padding:6px 14px;font-size:12px">
+          ${b.enabled?'❌ تعطيل':'✅ تفعيل'}
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterClientsList(q){
+  renderClientsList(q.trim());
+}
+
+function toggleBranchEnabled(id){
+  const branch = customBranches.find(b=>b.id===id);
+  if(!branch) return;
+  branch.enabled = !branch.enabled;
+  
+  // Update CHAINS_DATA
+  if(branch.enabled){
+    if(!CHAINS_DATA[branch.chain]) CHAINS_DATA[branch.chain]=[];
+    if(!CHAINS_DATA[branch.chain].includes(branch.branch)) CHAINS_DATA[branch.chain].push(branch.branch);
+  } else {
+    if(CHAINS_DATA[branch.chain]){
+      CHAINS_DATA[branch.chain] = CHAINS_DATA[branch.chain].filter(b=>b!==branch.branch);
+    }
+  }
+  
+  // Update STORE_CODES
+  if(STORE_CODES[branch.code]){
+    STORE_CODES[branch.code].enabled = branch.enabled;
+  }
+  
+  localStorage.setItem('adhoc_custom_branches', JSON.stringify(customBranches));
+  renderClientsList(document.getElementById('clients-search').value);
+  toast(branch.enabled ? '✅ تم التفعيل' : '❌ تم التعطيل');
+}
+
+// ─── BRANCH MANAGEMENT ───
+let customBranches = JSON.parse(localStorage.getItem('adhoc_custom_branches')||'[]');
+
+// ─── ID GENERATOR ───
+function generateBranchID(){
+  const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let id='';
+  for(let i=0;i<20;i++) id+=chars[Math.floor(Math.random()*chars.length)];
+  return id;
+}
+
+
+
+function switchBranchTab(tab){
+  document.getElementById('tab-manual-content').style.display = tab==='manual'?'block':'none';
+  document.getElementById('tab-excel-content').style.display = tab==='excel'?'block':'none';
+  document.getElementById('tab-manual').style.background = tab==='manual'?'var(--accent)':'var(--surface2)';
+  document.getElementById('tab-manual').style.color = tab==='manual'?'white':'var(--text2)';
+  document.getElementById('tab-excel').style.background = tab==='excel'?'var(--accent)':'var(--surface2)';
+  document.getElementById('tab-excel').style.color = tab==='excel'?'white':'var(--text2)';
+}
+
+function addBranchManual(){
+  const code = document.getElementById('new-code').value.trim();
+  const chain = document.getElementById('new-chain').value.trim();
+  const branch = document.getElementById('new-branch-name').value.trim();
+  if(!code||!chain||!branch){toast('⚠️ أكمل الكود والسلسلة والفرع');return;}
+  // Check if code exists
+  if(customBranches.find(b=>b.code===code)){toast('❌ الكود موجود مسبقاً');return;}
+  const id = generateBranchID();
+  const newBranch = {id,code,chain,branch,enabled:true};
+  // Add to CHAINS_DATA (only enabled)
+  if(!CHAINS_DATA[chain]) CHAINS_DATA[chain]=[];
+  if(!CHAINS_DATA[chain].includes(branch)) CHAINS_DATA[chain].push(branch);
+  // Add to STORE_CODES
+  STORE_CODES[code]={chain,branch,id,enabled:true};
+  // Save custom
+  customBranches.push(newBranch);
+  localStorage.setItem('adhoc_custom_branches',JSON.stringify(customBranches));
+  // Clear
+  document.getElementById('new-code').value='';
+  document.getElementById('new-chain').value='';
+  document.getElementById('new-branch-name').value='';
+  const r=document.getElementById('manual-add-result');
+  r.style.display='block';r.textContent=`✅ تمت إضافة: ${chain} / ${branch} (${code})`;
+  setTimeout(()=>r.style.display='none',3000);
+  updateAdminCounts();
+  toast('✅ تمت الإضافة بنجاح');
+}
+
+function updateAdminCounts(){
+  const el1=document.getElementById('admin-chains-count');
+  const el2=document.getElementById('admin-branches-count');
+  if(el1) el1.textContent=Object.keys(CHAINS_DATA).length;
+  if(el2){
+    let total=0;Object.values(CHAINS_DATA).forEach(v=>total+=v.length);
+    el2.textContent=total.toLocaleString();
+  }
+}
+
+
+function downloadClientsList(mode='all'){
+  const list = mode==='enabled' ? customBranches.filter(b=>b.enabled) : customBranches;
+  if(!list.length){toast('⚠️ لا توجد فروع '+(mode==='enabled'?'مفعلة':'مضافة'));return;}
+  let csv = '\uFEFFID,كود,سلسلة,فرع,Enabled\n';
+  list.forEach(b=>{
+    csv += `${b.id},${b.code},${b.chain},${b.branch},${b.enabled?'True':'False'}\n`;
+  });
+  const blob = new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url;
+  a.download='adhoc_clients_'+(mode==='enabled'?'enabled_':'')+'list.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('✅ تم تحميل قائمة العملاء ('+(mode==='enabled'?'Enabled فقط':'الكل')+')');
+}
+
+function downloadSampleExcel(){
+  // Generate CSV sample (works as Excel)
+  const sample = "\uFEFFكود,سلسلة,فرع\n1999,كارفور,سيتى ستارز\n2000,العثيم,المنصورة الجديدة\n2001,سبينس,بالم هيلز";
+  const blob = new Blob([sample],{type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download='sample_branches.csv'; a.click();
+  URL.revokeObjectURL(url);
+  toast('✅ تم تحميل ملف Sample');
+}
+
+let excelRows = [];
+function handleExcelUpload(e){
+  const file = e.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const text = ev.target.result;
+      const lines = text.split('\n').filter(l=>l.trim());
+      excelRows = [];
+      // Check if UPDATE mode (has ID column) or INSERT mode
+      const hasID = lines[0].toLowerCase().includes('id');
+      const start = 1; // Skip header
+      
+      for(let i=start;i<lines.length;i++){
+        const cols = lines[i].split(',').map(c=>c.replace(/"/g,'').trim());
+        if(hasID){
+          // UPDATE mode: ID,code,chain,branch,enabled
+          if(cols.length>=5 && cols[0]){
+            const enabled = cols[4].toLowerCase()==='true';
+            excelRows.push({id:cols[0],code:cols[1],chain:cols[2],branch:cols[3],enabled,mode:'update'});
+          }
+        } else {
+          // INSERT mode: code,chain,branch
+          if(cols.length>=3 && cols[0] && cols[1] && cols[2]){
+            excelRows.push({code:cols[0],chain:cols[1],branch:cols[2],mode:'insert'});
+          }
+        }
+      }
+      renderExcelPreview();
+    } catch(err){ toast('❌ خطأ في قراءة الملف'); }
+  };
+  reader.readAsText(file,'UTF-8');
+  e.target.value='';
+}
+
+function renderExcelPreview(){
+  if(!excelRows.length){toast('❌ لا توجد بيانات صالحة');return;}
+  document.getElementById('excel-preview').style.display='block';
+  document.getElementById('excel-preview-title').textContent=`معاينة: ${excelRows.length} صف`;
+  const tbody = document.getElementById('excel-table-body');
+  tbody.innerHTML = excelRows.map((r,i)=>`
+    <tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:6px 8px;border:1px solid var(--border)">${r.code}</td>
+      <td style="padding:6px 8px;border:1px solid var(--border)">${r.chain}</td>
+      <td style="padding:6px 8px;border:1px solid var(--border)">${r.branch}</td>
+      <td style="padding:6px 8px;text-align:center;border:1px solid var(--border);cursor:pointer" onclick="excelRows.splice(${i},1);renderExcelPreview()">🗑️</td>
+    </tr>`).join('');
+}
+
+function clearExcelPreview(){
+  excelRows=[];
+  document.getElementById('excel-preview').style.display='none';
+  document.getElementById('excel-table-body').innerHTML='';
+}
+
+function insertExcelData(){
+  if(!excelRows.length){toast('⚠️ لا توجد بيانات');return;}
+  let added=0, updated=0;
+  
+  excelRows.forEach(r=>{
+    if(r.mode==='update'){
+      // UPDATE mode - must have ID
+      if(!r.id){toast('❌ بعض الصفوف بدون ID');return;}
+      const existing = customBranches.find(b=>b.id===r.id);
+      if(existing){
+        existing.code=r.code;
+        existing.chain=r.chain;
+        existing.branch=r.branch;
+        existing.enabled=r.enabled;
+        // Update CHAINS_DATA and STORE_CODES
+        if(r.enabled){
+          if(!CHAINS_DATA[r.chain]) CHAINS_DATA[r.chain]=[];
+          if(!CHAINS_DATA[r.chain].includes(r.branch)) CHAINS_DATA[r.chain].push(r.branch);
+        } else {
+          // Remove from CHAINS_DATA if disabled
+          if(CHAINS_DATA[r.chain]){
+            CHAINS_DATA[r.chain] = CHAINS_DATA[r.chain].filter(b=>b!==r.branch);
+          }
+        }
+        STORE_CODES[r.code]={chain:r.chain,branch:r.branch,id:r.id,enabled:r.enabled};
+        updated++;
+      } else {
+        toast(`⚠️ ID غير موجود: ${r.id}`);
+      }
+    } else {
+      // INSERT mode
+      const id = generateBranchID();
+      const newBranch = {id,code:r.code,chain:r.chain,branch:r.branch,enabled:true};
+      if(!CHAINS_DATA[r.chain]) CHAINS_DATA[r.chain]=[];
+      if(!CHAINS_DATA[r.chain].includes(r.branch)) CHAINS_DATA[r.chain].push(r.branch);
+      STORE_CODES[r.code]={chain:r.chain,branch:r.branch,id,enabled:true};
+      customBranches.push(newBranch);
+      added++;
+    }
+  });
+  
+  localStorage.setItem('adhoc_custom_branches',JSON.stringify(customBranches));
+  clearExcelPreview();
+  updateAdminCounts();
+  if(added && updated) toast(`✅ إضافة ${added} فرع + تحديث ${updated} فرع`);
+  else if(added) toast(`✅ تمت إضافة ${added} فرع`);
+  else if(updated) toast(`✅ تم تحديث ${updated} فرع`);
+}
+
+// ─────────────────────── TEMPLATE EDITOR ───────────────────────
+const ORIGINAL_TEMPLATES = {};
+
+function getTemplateSource(tmpl){
+  // Return customized or original template HTML (raw string for editing)
+  const{chain='',branch='',name='[اسم المنسق]',id='[رقم البطاقة]',from='[من]',to='[إلى]',products='[المنتجات]'}= {chain:'[السلسلة]',branch:'[الفرع]',name:'[اسم المنسق]',id:'[رقم البطاقة]',from:'[من]',to:'[إلى]',products:'[المنتجات]'};
+  if(customTemplates[tmpl]) return customTemplates[tmpl];
+  // Build the original template with placeholders
+  const tmplHTML = buildDelegationWithPlaceholders(tmpl);
+  return tmplHTML;
+}
+
+function buildDelegationWithPlaceholders(tmpl){
+  const chain='[السلسلة]',branch='[الفرع]',name='[اسم المنسق]',id='[رقم البطاقة]',from='[من]',to='[إلى]',products='[المنتجات]';
+  const T={
+    carrefour:`<div class="delegation-preview">
+      <div class="prev-company">شركة ادهوك للتسويق</div>
+      <div class="prev-title">تفويض</div><div class="prev-line"></div>
+      <p class="prev-para">فوضنا نحن شركة ادهوك للتسويق</p>
+      <div class="prev-field"><span class="prev-key">المندوب / المنسق :</span><span class="prev-val">${name}</span></div>
+      <div class="prev-field"><span class="prev-key">بطاقة رقم :</span><span class="prev-val">${id}</span></div>
+      <div class="prev-field"><span class="prev-key">للعمل داخل :</span><span class="prev-val">${chain} / فرع ${branch}</span></div>
+      <div class="prev-field"><span class="prev-key">في الفترة من :</span><span class="prev-val">${from} حتى ${to}</span></div>
+      <div class="prev-field"><span class="prev-key">على منتجات :</span><span class="prev-val">${products}</span></div>
+      <p class="prev-para">و الشركة مسئولة مسئولية كاملة عن كامل تصرفات المندوب داخل ${chain} مسئولية التابع لمتبوعيه، و ينتهى هذا التفويض بانتهاء المدة المحددة او باخطار رسمى كتابى يسلم لإدارة الموارد البشرية.</p>
+      <p class="prev-para">وهذا تفويض منا بذلك</p>
+      <div class="prev-sigs"><div class="prev-sig"><div class="prev-sig-line"></div>ختم الشركة</div><div class="prev-sig"><div class="prev-sig-line"></div>توقيع المدير المسئول</div></div></div>`,
+    bndh:`<div class="delegation-preview">
+      <div class="prev-company">شركة ادهوك للتسويق</div>
+      <div class="prev-title">تفويض</div><div class="prev-line"></div>
+      <p class="prev-para">تقر شركة ادهوك للتسويق بأنها تتحمل المسئولية كاملة عن:</p>
+      <div class="prev-field"><span class="prev-key">المنسق :</span><span class="prev-val">${name}</span></div>
+      <div class="prev-field"><span class="prev-key">فرع :</span><span class="prev-val">${chain} / ${branch}</span></div>
+      <div class="prev-field"><span class="prev-key">بطاقة رقم :</span><span class="prev-val">${id}</span></div>
+      <div class="prev-field"><span class="prev-key">التاريخ من :</span><span class="prev-val">${from}</span></div>
+      <div class="prev-field"><span class="prev-key">إلى :</span><span class="prev-val">${to}</span></div>
+      <p class="prev-para">في أي ملابسات أو مشكلات أو شكاوى قد يتسبب فيها المندوب أثناء عمله بالفرع بالإضافة إلى إصابات العمل.</p>
+      <div class="prev-sigs"><div class="prev-sig"><div class="prev-sig-line"></div>ختم الشركة</div><div class="prev-sig"><div class="prev-sig-line"></div>توقيع المدير</div></div></div>`,
+    spinney:`<div class="delegation-preview">
+      <div class="prev-company">شركة ادهوك للأبحاث التسويقية</div>
+      <div class="prev-title">تفويض</div><div class="prev-line"></div>
+      <div class="prev-field"><span class="prev-key">فوضنا نحن شركة :</span><span class="prev-val">ادهوك للأبحاث التسويقية</span></div>
+      <div class="prev-field"><span class="prev-key">السيد / المنسق :</span><span class="prev-val">${name}</span></div>
+      <div class="prev-field"><span class="prev-key">رقم البطاقة :</span><span class="prev-val">${id}</span></div>
+      <div class="prev-field"><span class="prev-key">للعمل لدى :</span><span class="prev-val">${chain} (${branch})</span></div>
+      <div class="prev-field"><span class="prev-key">من تاريخ :</span><span class="prev-val">${from} حتى ${to}</span></div>
+      <div class="prev-field"><span class="prev-key">على منتجات :</span><span class="prev-val">${products}</span></div>
+      <p class="prev-para">مسئولية المتبوع عن أعمال تابعيه.</p>
+      <div class="prev-sigs"><div class="prev-sig"><div class="prev-sig-line"></div>المدير المسئول</div><div class="prev-sig"><div class="prev-sig-line"></div>ختم الشركة</div></div></div>`,
+    othym:`<div class="delegation-preview">
+      <div class="prev-company">شركة ادهوك للتسويق</div>
+      <div class="prev-title">تفويض</div><div class="prev-line"></div>
+      <p class="prev-para">السادة / شركة عبدالله العثيم &nbsp; فرع: ${branch}</p>
+      <div class="prev-field"><span class="prev-key">السيد :</span><span class="prev-val">${name}</span></div>
+      <div class="prev-field"><span class="prev-key">بطاقة شخصية رقم :</span><span class="prev-val">${id}</span></div>
+      <div class="prev-field"><span class="prev-key">في الفترة من :</span><span class="prev-val">${from} إلى ${to}</span></div>
+      <p class="prev-para">في التواجد طرفكم كمندوب عن شركتنا، مسئولية المتبوع عن أعمال تابعيه.</p>
+      <div class="prev-sigs"><div class="prev-sig"><div class="prev-sig-line"></div>الاسم والتوقيع</div><div class="prev-sig"><div class="prev-sig-line"></div>ختم الشركة</div></div></div>`,
+    lulu:`<div class="delegation-preview">
+      <div class="prev-company">شركة ادهوك للأبحاث التسويقية</div>
+      <div class="prev-title">تفويض</div><div class="prev-line"></div>
+      <p class="prev-para">فوضنا نحن شركة ادهوك للأبحاث التسويقية بناءً على طلب من شركة لولو</p>
+      <div class="prev-field"><span class="prev-key">المنسق :</span><span class="prev-val">${name}</span></div>
+      <div class="prev-field"><span class="prev-key">بطاقة رقم :</span><span class="prev-val">${id}</span></div>
+      <div class="prev-field"><span class="prev-key">للعمل فرع لولو :</span><span class="prev-val">${branch}</span></div>
+      <div class="prev-field"><span class="prev-key">من تاريخ :</span><span class="prev-val">${from} حتى ${to}</span></div>
+      <div class="prev-field"><span class="prev-key">منتجات :</span><span class="prev-val">${products}</span></div>
+      <p class="prev-para" style="text-align:center">لدى سيادتكم بالفرع. وهذا تفويض منا بذلك. ولكم جزيل الشكر</p>
+      <div class="prev-sigs"><div class="prev-sig"><div class="prev-sig-line"></div>المدير المسئول</div></div></div>`,
+    fathallah:`<div class="delegation-preview">
+      <div class="prev-company">شركة ادهوك للأبحاث التسويقية</div>
+      <div class="prev-title">تفويض مندوب 2025</div><div class="prev-line"></div>
+      <div class="prev-field"><span class="prev-key">فوضنا نحن شركة :</span><span class="prev-val">ادهوك للأبحاث التسويقية</span></div>
+      <div class="prev-field"><span class="prev-key">المنسق / المندوب :</span><span class="prev-val">${name}</span></div>
+      <div class="prev-field"><span class="prev-key">رقم قومى :</span><span class="prev-val">${id}</span></div>
+      <div class="prev-field"><span class="prev-key">سارى حتى تاريخ :</span><span class="prev-val">${to}</span></div>
+      <p class="prev-para">وذلك لعرض وتسويق منتجات الشركة داخل فروع ${chain} (${branch}).</p>
+      <div class="prev-sigs"><div class="prev-sig"><div class="prev-sig-line"></div>المشرف</div><div class="prev-sig"><div class="prev-sig-line"></div>المدير</div><div class="prev-sig"><div class="prev-sig-line"></div>ختم الشركة</div></div></div>`,
+    general:`<div class="delegation-preview">
+      <div class="prev-company">شركة ادهوك للأبحاث التسويقية</div>
+      <div class="prev-title">تفويض</div><div class="prev-line"></div>
+      <p class="prev-para">فوضنا نحن شركة ادهوك للأبحاث التسويقية</p>
+      <div class="prev-field"><span class="prev-key">المنسق :</span><span class="prev-val">${name}</span></div>
+      <div class="prev-field"><span class="prev-key">بطاقة رقم :</span><span class="prev-val">${id}</span></div>
+      <div class="prev-field"><span class="prev-key">للعمل بفرع :</span><span class="prev-val">${branch} - ${chain}</span></div>
+      <div class="prev-field"><span class="prev-key">في الفترة من :</span><span class="prev-val">${from}</span></div>
+      <div class="prev-field"><span class="prev-key">إلى :</span><span class="prev-val">${to}</span></div>
+      <div class="prev-field"><span class="prev-key">لمباشرة أعمال :</span><span class="prev-val">${products}</span></div>
+      <p class="prev-para" style="text-align:center">لدى سيادتكم بالفرع. وهذا تفويض منا بذلك. ولكم جزيل الشكر</p>
+      <div class="prev-sigs"><div class="prev-sig"><div class="prev-sig-line"></div>المدير المسئول</div><div class="prev-sig"><div class="prev-sig-line"></div>ختم الشركة</div></div></div>`
+  };
+  return T[tmpl]||T.general;
+}
+
+function loadTemplateForEdit(tmpl){
+  const area = document.getElementById('template-editor-area');
+  if(!tmpl){area.style.display='none';return;}
+  area.style.display='block';
+  const src = customTemplates[tmpl] || buildDelegationWithPlaceholders(tmpl);
+  document.getElementById('template-html-editor').value = src;
+}
+
+function saveTemplateEdit(){
+  const tmpl = document.getElementById('template-chain-select').value;
+  if(!tmpl){toast('⚠️ اختر سلسلة أولاً');return;}
+  const html = document.getElementById('template-html-editor').value.trim();
+  if(!html){toast('⚠️ لا يمكن حفظ قالب فارغ');return;}
+  customTemplates[tmpl] = html;
+  localStorage.setItem('adhoc_custom_templates', JSON.stringify(customTemplates));
+  const res = document.getElementById('template-edit-result');
+  res.style.display='block';
+  res.style.color='var(--success)';
+  res.textContent='✅ تم حفظ التعديل بنجاح';
+  setTimeout(()=>res.style.display='none',3000);
+  toast('✅ تم حفظ القالب');
+}
+
+function previewTemplateEdit(){
+  const html = document.getElementById('template-html-editor').value;
+  if(!html){toast('⚠️ لا يوجد محتوى للمعاينة');return;}
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>معاينة القالب</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Cairo',sans-serif;direction:rtl;padding:24px;background:white;color:#1a1a2e}
+  .delegation-preview{font-size:14px;line-height:1.9}.prev-company{font-size:13px;text-align:center;color:#555;margin-bottom:14px}
+  .prev-title{font-size:22px;font-weight:900;text-align:center;margin-bottom:4px}.prev-line{border-bottom:2px solid #1a1a2e;margin-bottom:14px}
+  .prev-field{display:flex;gap:8px;margin-bottom:8px;font-weight:600}.prev-key{color:#555;min-width:140px;flex-shrink:0}
+  .prev-val{font-weight:700}.prev-para{margin:10px 0;line-height:1.8}
+  .prev-sigs{display:flex;justify-content:space-between;align-items:flex-end;margin-top:40px;gap:20px}
+  .prev-sig{text-align:center;font-weight:700;font-size:12px;flex:1}.prev-sig-line{width:100px;border-bottom:1.5px solid #1a1a2e;margin:0 auto 8px;height:36px}
+  </style></head><body>${html}</body></html>`);
+  w.document.close();
+}
+
+function resetTemplate(){
+  const tmpl = document.getElementById('template-chain-select').value;
+  if(!tmpl){toast('⚠️ اختر سلسلة أولاً');return;}
+  if(!confirm('هل تريد استعادة القالب الأصلي وإلغاء التعديلات؟')) return;
+  delete customTemplates[tmpl];
+  localStorage.setItem('adhoc_custom_templates', JSON.stringify(customTemplates));
+  document.getElementById('template-html-editor').value = buildDelegationWithPlaceholders(tmpl);
+  toast('↩️ تم استعادة القالب الأصلي');
+}
+
+function exportUpdateAsWord(rec){
+  // Export a delegation update/modification as Word
+  const chain = rec.chain || state.chain;
+  const branch = rec.branch || state.branch;
+  const name = rec.name || state.name;
+  const tmpl = TEMPLATE_MAP[chain]||'general';
+  const savedState = {...state};
+  state = rec || state;
+  const content = getDelegationHTML();
+  state = savedState;
+  const wordHTML=`<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+    <head><meta charset="UTF-8">
+    <xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml>
+    <style>@page{margin:2cm}body{font-family:'Traditional Arabic',Arial,sans-serif;direction:rtl;font-size:14pt;color:#1a1a2e}
+    .delegation-preview{font-size:14pt;line-height:1.8}.prev-company{font-size:12pt;text-align:center;color:#555;margin-bottom:10pt}
+    .prev-title{font-size:18pt;font-weight:bold;text-align:center;margin-bottom:4pt}.prev-line{border-bottom:2pt solid #1a1a2e;margin-bottom:12pt}
+    .prev-field{display:flex;gap:8pt;margin-bottom:6pt;font-weight:bold}.prev-key{color:#444;min-width:130pt}.prev-val{font-weight:bold}
+    .prev-para{margin:8pt 0;line-height:1.8}
+    .prev-sigs{display:flex;justify-content:space-between;margin-top:40pt;gap:20pt}
+    .prev-sig{text-align:center;font-weight:bold;font-size:12pt;flex:1}.prev-sig-line{width:100pt;border-bottom:1pt solid #1a1a2e;margin:0 auto 8pt;height:36pt}
+    </style></head><body>${content}</body></html>`;
+  const blob=new Blob(['\ufeff'+wordHTML],{type:'application/msword;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=`تعديل_تفويض_${name}_${chain}_${branch}.doc`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('✅ تم تصدير التعديل كـ Word');
+}
+
+// ─────────────────────── ADMIN UPDATES TWO-LIST VIEW ───────────────────────
+function renderAdminUpdatesTwoLists(){
+  const enabledList = customBranches.filter(b=>b.enabled);
+  const disabledList = customBranches.filter(b=>!b.enabled);
+  const el = document.getElementById('admin-updates-lists');
+  if(!el) return;
+  el.innerHTML = `
+    <div style="margin-bottom:16px">
+      <div style="font-weight:700;color:var(--success);margin-bottom:8px;font-size:13px">✅ Enabled (${enabledList.length})</div>
+      ${enabledList.length ? enabledList.slice(0,5).map(b=>`<div style="font-size:12px;padding:6px 0;border-bottom:1px solid var(--border);color:var(--text2)">${b.chain} / ${b.branch} <span style="color:var(--text3)">(${b.code})</span></div>`).join('')+(enabledList.length>5?`<div style="font-size:11px;color:var(--text3);padding:4px 0">...و${enabledList.length-5} أكثر</div>`:'') : '<div style="font-size:12px;color:var(--text3)">لا يوجد</div>'}
+    </div>
+    <div>
+      <div style="font-weight:700;color:var(--danger);margin-bottom:8px;font-size:13px">❌ Disabled (${disabledList.length})</div>
+      ${disabledList.length ? disabledList.slice(0,5).map(b=>`<div style="font-size:12px;padding:6px 0;border-bottom:1px solid var(--border);color:var(--text2)">${b.chain} / ${b.branch} <span style="color:var(--text3)">(${b.code})</span></div>`).join('')+(disabledList.length>5?`<div style="font-size:11px;color:var(--text3);padding:4px 0">...و${disabledList.length-5} أكثر</div>`:'') : '<div style="font-size:12px;color:var(--text3)">لا يوجد</div>'}
+    </div>
+  `;
+}
+
+function loadCustomBranches(){
+  customBranches.forEach(r=>{
+    if(!CHAINS_DATA[r.chain]) CHAINS_DATA[r.chain]=[];
+    if(!CHAINS_DATA[r.chain].includes(r.branch)) CHAINS_DATA[r.chain].push(r.branch);
+    STORE_CODES[r.code]={chain:r.chain,branch:r.branch};
+  });
+}
+loadCustomBranches();
+
+// Init
+document.getElementById('login-user').focus();
+</script>
+</body>
+</html>
