@@ -396,7 +396,11 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:16px 0}
 
     <div class="field-group" style="position:relative">
       <div class="field-label">👤 اسم المنسق رباعياً <span class="field-hint">بالعربية فقط · 4 كلمات على الأقل</span></div>
-      <input class="form-input" id="f-name" type="text" placeholder="أحمد محمد علي إبراهيم" autocomplete="off" oninput="acName(this.value)" onblur="setTimeout(()=>hideAC('ac-name'),200)">
+      <input class="form-input" id="f-name" type="text" placeholder="اختر المشروع أولاً لتفعيل هذا الحقل" autocomplete="off"
+        lang="ar" inputmode="text" disabled
+        style="opacity:.5;cursor:not-allowed"
+        oninput="enforceArabicName(this);acName(this.value)"
+        onblur="setTimeout(()=>hideAC('ac-name'),200)">
       <div id="ac-name" style="display:none;position:absolute;z-index:999;width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:12px;margin-top:2px;max-height:180px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.4)"></div>
       <div class="form-error" id="err-name"></div>
     </div>
@@ -422,8 +426,10 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:16px 0}
       <div class="form-error" id="err-insurance"></div>
     </div>
     <div class="field-group" id="products-group">
-      <div class="field-label">📦 المنتجات <span class="field-hint">اختياري</span></div>
-      <input class="form-input" id="f-products" type="text" placeholder="منتجات غذائية">
+      <div class="field-label">🗂️ المشروع <span class="field-hint" style="color:var(--danger)">مطلوب لتفعيل خانة الاسم</span></div>
+      <select class="form-input" id="f-products" style="font-size:14px;padding:12px" onchange="onProjectChange(this.value)">
+        <option value="">-- اختر المشروع أولاً --</option>
+      </select>
     </div>
     <div id="dup-warning" style="display:none;background:rgba(245,158,11,.1);border:1px solid var(--warn);border-radius:12px;padding:12px;margin-bottom:8px;font-size:13px;color:var(--warn)">
       ⚠️ يوجد تفويض سابق لهذا المنسق في نفس الفرع. تأكد قبل الاستمرار.
@@ -486,19 +492,48 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:16px 0}
   </div>
   <div class="scroll">
     <div class="kpi-grid" id="kpi-grid"></div>
+
+    <!-- أكثر السلاسل استخداماً - جدول + بارات -->
+    <div class="chart-card">
+      <div class="chart-title">🏪 أكثر السلاسل استخداماً</div>
+      <div id="chains-bar-table" style="padding:4px 0"></div>
+    </div>
+
+    <!-- التفويضات حسب حالة الانتهاء -->
+    <div class="chart-card" style="cursor:pointer" onclick="goTo('expiry-screen')">
+      <div class="chart-title">⏰ حالة التفويضات <span style="font-size:11px;color:var(--text3);font-weight:400">(اضغط للتفاصيل)</span></div>
+      <div id="expiry-bar-table" style="padding:4px 0"></div>
+    </div>
+
+    <!-- التفويضات اليومية -->
     <div class="chart-card">
       <div class="chart-title">📈 التفويضات اليومية (آخر 7 أيام)</div>
       <div class="chart-wrap"><canvas id="chart-daily"></canvas></div>
     </div>
-    <div class="chart-card">
-      <div class="chart-title">🏪 أكثر السلاسل استخداماً</div>
-      <div class="chart-wrap"><canvas id="chart-chains"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <div class="chart-title">📋 حالة التفويضات</div>
-      <div class="chart-wrap"><canvas id="chart-status"></canvas></div>
-    </div>
   </div>
+</div>
+
+<!-- ═══ Expiry Details Screen ═══ -->
+<div class="screen hidden" id="expiry-screen">
+  <div class="topbar">
+    <button class="back-btn" onclick="goBack()">→</button>
+    <div><div class="topbar-title">⏰ تفاصيل حالة التفويضات</div></div>
+  </div>
+  <div style="display:flex;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0">
+    <button id="exp-tab-red" onclick="switchExpiryTab('red')" style="flex:1;padding:13px;background:#ef4444;color:white;border:none;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer">🔴 تنتهي قريباً</button>
+    <button id="exp-tab-yellow" onclick="switchExpiryTab('yellow')" style="flex:1;padding:13px;background:var(--surface2);color:var(--text2);border:none;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer">🟡 تقترب</button>
+    <button id="exp-tab-green" onclick="switchExpiryTab('green')" style="flex:1;padding:13px;background:var(--surface2);color:var(--text2);border:none;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer">🟢 بعيدة</button>
+  </div>
+  <div class="scroll" id="expiry-list"></div>
+</div>
+
+<!-- ═══ Project Delegations Screen ═══ -->
+<div class="screen hidden" id="project-deleg-screen">
+  <div class="topbar">
+    <button class="back-btn" onclick="goBack()">→</button>
+    <div><div class="topbar-title" id="proj-deleg-title">📁 المشروع</div></div>
+  </div>
+  <div class="scroll" id="proj-deleg-list"></div>
 </div>
 
 
@@ -538,39 +573,179 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:16px 0}
         <button class="btn btn-primary btn-sm" onclick="openAddUser()">+ إضافة مستخدم</button>
       </div>
     </div>
+    <!-- ═══ إعداد Google Drive URL ═══ -->
     <div class="admin-section">
-      <div class="admin-section-header">🗄️ إدارة البيانات</div>
-      <div class="admin-item">
-        <div><div class="admin-item-text">📥 تحميل قائمة العملاء للتعديل</div><div class="admin-item-sub">اختر نوع التحميل ثم ارفع الملف المعدل</div></div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <button class="btn btn-success btn-sm" onclick="downloadClientsList('enabled')">📥 Enabled فقط</button>
-          <button class="btn btn-secondary btn-sm" onclick="downloadClientsList('all')">📥 الكل</button>
-          <button class="btn btn-primary btn-sm" onclick="document.getElementById('update-excel-upload').click()">📤 رفع للتحديث</button>
+      <div class="admin-section-header">☁️ إعداد Google Drive</div>
+      <div style="padding:14px">
+        <div class="field-group">
+          <div class="field-label">🔗 رابط Google Apps Script <span class="field-hint">للحفظ التلقائي</span></div>
+          <input class="form-input" id="drive-url-input" type="url" dir="ltr"
+            placeholder="https://script.google.com/macros/s/..." style="font-size:12px">
+          <div style="font-size:11px;color:var(--text3);margin-top:5px">الرابط الحالي: <span id="drive-url-current" style="color:var(--accent);font-family:monospace;font-size:11px;word-break:break-all"></span></div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-primary" onclick="saveDriveURL()" style="flex:1;padding:11px">💾 حفظ الرابط</button>
+          <button class="btn btn-secondary btn-sm" onclick="testDriveURL()" style="padding:11px 14px">🔗 اختبار</button>
+          <button class="btn btn-danger btn-sm" onclick="resetDriveURL()" style="padding:11px 14px" title="استعادة الرابط الافتراضي">↩️</button>
+        </div>
+        <div id="drive-url-result" style="display:none;margin-top:8px;font-size:12px;padding:8px 12px;border-radius:8px"></div>
+      </div>
+    </div>
+    <!-- ═══ إدارة بيانات الفروع ═══ -->
+    <div class="admin-section">
+      <div class="admin-section-header">🏬 إدارة بيانات الفروع</div>
+      <!-- Tabs -->
+      <div style="display:flex;border-bottom:1px solid var(--border)">
+        <button id="branch-data-tab-download" onclick="switchBranchDataTab('download')" style="flex:1;padding:12px;background:var(--accent);color:white;border:none;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer">تحميل</button>
+        <button id="branch-data-tab-upload" onclick="switchBranchDataTab('upload')" style="flex:1;padding:12px;background:var(--surface2);color:var(--text2);border:none;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer">رفع Excel</button>
+        <button id="branch-data-tab-delete" onclick="switchBranchDataTab('delete')" style="flex:1;padding:12px;background:var(--surface2);color:var(--text2);border:none;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer">حذف / DB</button>
+      </div>
+
+      <!-- Download Tab -->
+      <div id="branch-data-tab-download-content" style="padding:14px">
+        <div style="background:var(--surface2);border:1px dashed var(--border);border-radius:12px;padding:20px;text-align:center;margin-bottom:12px">
+          <div style="font-size:32px;margin-bottom:8px">📊</div>
+          <div style="font-size:14px;font-weight:700;margin-bottom:16px">تحميل قائمة الفروع</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <button class="btn btn-success" onclick="downloadClientsList('enabled')" style="padding:14px">
+              <span style="font-size:18px">✅</span> تحميل الفروع المتاحة
+              <div style="font-size:11px;font-weight:400;opacity:.8;margin-top:2px">Enabled فقط</div>
+            </button>
+            <button class="btn btn-secondary" onclick="downloadClientsList('all')" style="padding:14px;border:1px solid var(--border)">
+              <span style="font-size:18px">📋</span> تحميل جميع الفروع
+              <div style="font-size:11px;font-weight:400;opacity:.8;margin-top:2px">Enabled + Disabled</div>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upload Tab -->
+      <div id="branch-data-tab-upload-content" style="padding:14px;display:none">
+        <div style="background:var(--surface2);border:1px dashed var(--border);border-radius:12px;padding:20px;text-align:center;margin-bottom:12px">
+          <div style="font-size:32px;margin-bottom:8px">📤</div>
+          <div style="font-size:13px;color:var(--text2);margin-bottom:4px">ارفع ملف Excel بـ 3 أعمدة:</div>
+          <div style="font-size:12px;color:var(--text3);margin-bottom:16px">كود | سلسلة | فرع</div>
+          <div style="display:flex;gap:8px;justify-content:center">
+            <button class="btn btn-secondary btn-sm" onclick="downloadSampleExcel()">📥 Sample</button>
+            <button class="btn btn-primary btn-sm" onclick="document.getElementById('update-excel-upload').click()">📤 رفع للتحديث</button>
+          </div>
           <input type="file" id="update-excel-upload" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleExcelUpload(event)">
         </div>
+        <div id="branch-upload-result" style="display:none;margin-top:8px;font-size:13px"></div>
       </div>
-      <div class="admin-item">
-        <div><div class="admin-item-text">تصدير قاعدة البيانات</div><div class="admin-item-sub">حفظ كل التفويضات والإعدادات</div></div>
-        <button class="btn btn-secondary btn-sm" onclick="exportDB()">📥 تصدير</button>
-      </div>
-      <div class="admin-item">
-        <div><div class="admin-item-text">استيراد قاعدة البيانات</div><div class="admin-item-sub">استعادة من ملف JSON</div></div>
-        <button class="btn btn-secondary btn-sm" onclick="importDB()">📤 استيراد</button>
-      </div>
-      <div class="admin-item">
-        <div><div class="admin-item-text">🗑️ حذف العملاء (الداتا الرئيسية)</div><div class="admin-item-sub">حذف العملاء المضافين من الداتا الأصلية</div></div>
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-danger btn-sm" onclick="deleteClientsFromMainData()">🗑️ حذف العملاء</button>
-        </div>
-      </div>
-      <div class="admin-item">
-        <div><div class="admin-item-text">🗑️ حذف بيانات التفويضات</div><div class="admin-item-sub">حذف سجل التفويضات فقط (لا يؤثر على العملاء)</div></div>
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-danger btn-sm" onclick="clearDelegationsOnly()">🗑️ حذف التفويضات</button>
+
+      <!-- Delete / DB Tab -->
+      <div id="branch-data-tab-delete-content" style="padding:14px;display:none">
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <button class="btn btn-secondary" onclick="exportDB()" style="padding:13px;justify-content:flex-start;gap:12px;border:1px solid var(--border)">
+            <span style="font-size:20px">📥</span>
+            <div style="text-align:right">
+              <div style="font-weight:700">تصدير قاعدة البيانات</div>
+              <div style="font-size:11px;font-weight:400;color:var(--text2);margin-top:2px">حفظ كل التفويضات والإعدادات</div>
+            </div>
+          </button>
+          <button class="btn btn-secondary" onclick="importDB()" style="padding:13px;justify-content:flex-start;gap:12px;border:1px solid var(--border)">
+            <span style="font-size:20px">📤</span>
+            <div style="text-align:right">
+              <div style="font-weight:700">استيراد قاعدة البيانات</div>
+              <div style="font-size:11px;font-weight:400;color:var(--text2);margin-top:2px">استعادة من ملف JSON</div>
+            </div>
+          </button>
+          <div style="border-top:1px solid var(--border);padding-top:10px;display:flex;flex-direction:column;gap:8px">
+            <button class="btn btn-danger" onclick="deleteClientsFromMainData()" style="padding:13px;justify-content:flex-start;gap:12px">
+              <span style="font-size:20px">🗑️</span>
+              <div style="text-align:right">
+                <div style="font-weight:700">حذف العملاء من الداتا الرئيسية</div>
+                <div style="font-size:11px;font-weight:400;opacity:.8;margin-top:2px">حذف الفروع المضافة من القائمة الأصلية</div>
+              </div>
+            </button>
+            <button class="btn btn-danger" onclick="clearDelegationsOnly()" style="padding:13px;justify-content:flex-start;gap:12px;background:rgba(239,68,68,.15);color:var(--danger);border:1px solid var(--danger)">
+              <span style="font-size:20px">🗑️</span>
+              <div style="text-align:right">
+                <div style="font-weight:700">حذف بيانات التفويضات</div>
+                <div style="font-size:11px;font-weight:400;opacity:.8;margin-top:2px">حذف السجل فقط — لا يؤثر على الفروع</div>
+              </div>
+            </button>
+          </div>
         </div>
       </div>
     </div>
-    <!-- ═══ إضافة فروع يدوي ═══ -->
+    <!-- ═══ إدارة المنسقين ═══ -->
+    <div class="admin-section">
+      <div class="admin-section-header">👤 إدارة المنسقين</div>
+      <!-- Tabs -->
+      <div style="display:flex;border-bottom:1px solid var(--border)">
+        <button id="coord-tab-manual" onclick="switchCoordTab('manual')" style="flex:1;padding:12px;background:var(--accent);color:white;border:none;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer">إضافة يدوي</button>
+        <button id="coord-tab-excel" onclick="switchCoordTab('excel')" style="flex:1;padding:12px;background:var(--surface2);color:var(--text2);border:none;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer">رفع Excel</button>
+        <button id="coord-tab-list" onclick="switchCoordTab('list')" style="flex:1;padding:12px;background:var(--surface2);color:var(--text2);border:none;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer">القائمة</button>
+      </div>
+      <!-- Manual Tab -->
+      <div id="coord-tab-manual-content" style="padding:14px">
+        <div class="field-group">
+          <div class="field-label">👤 اسم المنسق رباعياً <span class="field-hint">عربي فقط</span></div>
+          <input class="form-input" id="coord-name-input" type="text" lang="ar" placeholder="أحمد محمد علي إبراهيم"
+            oninput="enforceArabicName(this)" style="font-size:14px">
+          <div class="form-error" id="err-coord-name"></div>
+        </div>
+        <div class="field-group">
+          <div class="field-label">🪪 رقم البطاقة القومية <span class="field-hint">14 رقم بالضبط</span></div>
+          <input class="form-input" id="coord-id-input" type="tel" inputmode="numeric" dir="ltr" placeholder="29901011234567"
+            oninput="this.value=this.value.replace(/\D/g,'')" maxlength="14" style="font-size:14px">
+          <div class="form-error" id="err-coord-id"></div>
+        </div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--text2)">
+          🔑 الـ ID العشوائي: <span id="coord-uid-preview" style="font-family:monospace;color:var(--accent);font-size:11px">—</span>
+          <button onclick="generateCoordUID()" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:12px;margin-right:8px">🔄 توليد جديد</button>
+        </div>
+        <button class="btn btn-primary" onclick="addCoordinatorManual()" style="padding:12px">➕ إضافة المنسق</button>
+        <div id="coord-add-result" style="margin-top:8px;font-size:13px;display:none"></div>
+      </div>
+      <!-- Excel Tab -->
+      <div id="coord-tab-excel-content" style="padding:14px;display:none">
+        <div style="background:var(--surface2);border:1px dashed var(--border);border-radius:12px;padding:16px;text-align:center;margin-bottom:12px">
+          <div style="font-size:28px;margin-bottom:8px">📊</div>
+          <div style="font-size:13px;color:var(--text2);margin-bottom:4px">ارفع ملف Excel بـ 3 أعمدة:</div>
+          <div style="font-size:12px;color:var(--text3);margin-bottom:12px">اسم المنسق | رقم البطاقة | المشروع (اختياري)</div>
+          <div style="display:flex;gap:8px;justify-content:center">
+            <button class="btn btn-secondary btn-sm" onclick="downloadCoordSample()">📥 Sample</button>
+            <button class="btn btn-primary btn-sm" onclick="document.getElementById('coord-excel-upload').click()">📤 رفع Excel</button>
+          </div>
+          <input type="file" id="coord-excel-upload" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleCoordExcelUpload(event)">
+        </div>
+        <div id="coord-excel-preview" style="display:none">
+          <div style="font-size:13px;font-weight:700;margin-bottom:8px" id="coord-excel-title"></div>
+          <div style="overflow-x:auto;max-height:200px;overflow-y:auto">
+            <table id="coord-excel-table" style="width:100%;border-collapse:collapse;font-size:12px">
+              <thead>
+                <tr style="background:var(--surface2)">
+                  <th style="padding:8px;text-align:right;border:1px solid var(--border)">الاسم</th>
+                  <th style="padding:8px;text-align:right;border:1px solid var(--border)">البطاقة</th>
+                  <th style="padding:8px;text-align:right;border:1px solid var(--border)">المشروع</th>
+                  <th style="padding:8px;border:1px solid var(--border)">🗑️</th>
+                </tr>
+              </thead>
+              <tbody id="coord-excel-body"></tbody>
+            </table>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="btn btn-success" onclick="insertCoordExcelData()" style="flex:1">✅ إضافة للقائمة</button>
+            <button class="btn btn-secondary" onclick="clearCoordExcelPreview()" style="flex:1">❌ إلغاء</button>
+          </div>
+        </div>
+      </div>
+      <!-- List Tab -->
+      <div id="coord-tab-list-content" style="padding:14px;display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <span style="font-size:13px;color:var(--text2)" id="coord-list-count">—</span>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-secondary btn-sm" onclick="downloadCoordList()">📥 تحميل</button>
+            <button class="btn btn-danger btn-sm" onclick="clearAllCoordinators()">🗑️ حذف الكل</button>
+          </div>
+        </div>
+        <input class="form-input" id="coord-list-search" type="search" placeholder="🔍 بحث..." oninput="renderCoordList(this.value)" style="margin-bottom:10px;font-size:13px">
+        <div id="coord-list-container" style="max-height:300px;overflow-y:auto"></div>
+      </div>
+    </div>
     <div class="admin-section">
       <div class="admin-section-header">🏬 إضافة محلات / فروع</div>
       <!-- Tab buttons -->
@@ -665,6 +840,27 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:16px 0}
     <div class="admin-section">
       <div class="admin-section-header">📋 قائمة العملاء المضافين (Enabled / Disabled)</div>
       <div id="admin-updates-lists" style="padding:14px"></div>
+    </div>
+    <!-- ═══ إدارة المشاريع ═══ -->
+    <div class="admin-section">
+      <div class="admin-section-header">🗂️ إدارة المشاريع</div>
+      <div style="display:flex;border-bottom:1px solid var(--border)">
+        <button id="proj-tab-list" onclick="switchProjTab('list')" style="flex:1;padding:12px;background:var(--accent);color:white;border:none;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer">القائمة</button>
+        <button id="proj-tab-add" onclick="switchProjTab('add')" style="flex:1;padding:12px;background:var(--surface2);color:var(--text2);border:none;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer">إضافة</button>
+      </div>
+      <!-- List -->
+      <div id="proj-tab-list-content" style="padding:14px">
+        <div id="proj-admin-list"></div>
+      </div>
+      <!-- Add -->
+      <div id="proj-tab-add-content" style="padding:14px;display:none">
+        <div class="field-group">
+          <div class="field-label">اسم المشروع</div>
+          <input class="form-input" id="proj-new-name" type="text" placeholder="مثال: هاينز 2025" style="font-size:14px">
+          <div class="form-error" id="err-proj-name"></div>
+        </div>
+        <button class="btn btn-primary" onclick="addProject()" style="padding:12px;width:100%">➕ إضافة المشروع</button>
+      </div>
     </div>
   </div>
 </div>
@@ -994,6 +1190,7 @@ function openForm(){
   document.getElementById('f-insurance').value='';
   ['err-name','err-id','err-from','err-to','err-insurance'].forEach(id=>{const e=document.getElementById(id);e.textContent='';e.classList.remove('show')});
   document.getElementById('dup-warning').style.display='none';
+  populateProjectSelect();
   goTo('form-screen');
 }
 function fmt(d){return`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`}
@@ -1080,7 +1277,7 @@ function buildDelegation(tmpl){
       <div class="prev-field"><span class="prev-key">بطاقة رقم :</span><span class="prev-val">${id}</span></div>
       <div class="prev-field"><span class="prev-key">للعمل داخل :</span><span class="prev-val">${chain} / فرع ${branch}</span></div>
       <div class="prev-field"><span class="prev-key">في الفترة من :</span><span class="prev-val">${from} حتى ${to}</span></div>
-      ${products?`<div class="prev-field"><span class="prev-key">على منتجات :</span><span class="prev-val">${products}</span></div>`:''}
+      ${products?`<div class="prev-field"><span class="prev-key">المشروع :</span><span class="prev-val">${products}</span></div>`:''}
       <p class="prev-para">و الشركة مسئولة مسئولية كاملة عن كامل تصرفات المندوب داخل ${chain} مسئولية التابع لمتبوعيه، و ينتهى هذا التفويض بانتهاء المدة المحددة او باخطار رسمى كتابى يسلم لإدارة الموارد البشرية.</p>
       <p class="prev-para">وهذا تفويض منا بذلك</p>
       <div class="prev-sigs"><div class="prev-sig"><div class="prev-sig-line"></div>ختم الشركة</div><div class="prev-sig"><div class="prev-sig-line"></div>توقيع المدير المسئول</div></div></div>`,
@@ -1105,7 +1302,7 @@ function buildDelegation(tmpl){
       <div class="prev-field"><span class="prev-key">رقم البطاقة :</span><span class="prev-val">${id}</span></div>
       <div class="prev-field"><span class="prev-key">للعمل لدى :</span><span class="prev-val">${chain} (${branch})</span></div>
       <div class="prev-field"><span class="prev-key">من تاريخ :</span><span class="prev-val">${from} حتى ${to}</span></div>
-      ${products?`<div class="prev-field"><span class="prev-key">على منتجات :</span><span class="prev-val">${products}</span></div>`:''}
+      ${products?`<div class="prev-field"><span class="prev-key">المشروع :</span><span class="prev-val">${products}</span></div>`:''}
       <p class="prev-para">مسئولية المتبوع عن أعمال تابعيه. وتتعهد الشركة بإخطاركم حال انتهاء عمل المندوب. المنسق جاري التأمين عليه من قبل الشركة.</p>
       <div class="prev-sigs"><div class="prev-sig"><div class="prev-sig-line"></div>المدير المسئول</div><div class="prev-sig"><div class="prev-sig-line"></div>ختم الشركة</div></div></div>`,
     othym:`<div class="delegation-preview">
@@ -1127,7 +1324,7 @@ function buildDelegation(tmpl){
       <div class="prev-field"><span class="prev-key">بطاقة رقم :</span><span class="prev-val">${id}</span></div>
       <div class="prev-field"><span class="prev-key">للعمل فرع لولو :</span><span class="prev-val">${branch}</span></div>
       <div class="prev-field"><span class="prev-key">من تاريخ :</span><span class="prev-val">${from} حتى ${to}</span></div>
-      ${products?`<div class="prev-field"><span class="prev-key">منتجات :</span><span class="prev-val">${products}</span></div>`:''}
+      ${products?`<div class="prev-field"><span class="prev-key">المشروع :</span><span class="prev-val">${products}</span></div>`:''}
       <p class="prev-para" style="text-align:center">لدى سيادتكم بالفرع. وهذا تفويض منا بذلك. ولكم جزيل الشكر</p>
       <div class="prev-sigs"><div class="prev-sig"><div class="prev-sig-line"></div>المدير المسئول</div></div></div>`,
     fathallah:`<div class="delegation-preview">
@@ -1150,7 +1347,7 @@ function buildDelegation(tmpl){
       <div class="prev-field"><span class="prev-key">للعمل بفرع :</span><span class="prev-val">${branch} - ${chain}</span></div>
       <div class="prev-field"><span class="prev-key">في الفترة من :</span><span class="prev-val">${from}</span></div>
       <div class="prev-field"><span class="prev-key">إلى :</span><span class="prev-val">${to}</span></div>
-      ${products?`<div class="prev-field"><span class="prev-key">لمباشرة أعمال :</span><span class="prev-val">${products}</span></div>`:''}
+      ${products?`<div class="prev-field"><span class="prev-key">المشروع :</span><span class="prev-val">${products}</span></div>`:''}
       <p class="prev-para" style="text-align:center">لدى سيادتكم بالفرع. وهذا تفويض منا بذلك. ولكم جزيل الشكر</p>
       <div class="prev-sigs"><div class="prev-sig"><div class="prev-sig-line"></div>المدير المسئول</div><div class="prev-sig"><div class="prev-sig-line"></div>ختم الشركة</div></div></div>`
   };
@@ -1159,10 +1356,243 @@ function buildDelegation(tmpl){
 
 // ─────────────────────── SAVE / PRINT ───────────────────────
 // ═══ Coordinators Autocomplete ═══
+// ═══════════════════════════════════════════════════
+// ARABIC ONLY ENFORCEMENT
+// ═══════════════════════════════════════════════════
+function enforceArabicName(input){
+  // Allow Arabic letters, spaces, diacritics (tashkeel) only — strip everything else
+  const allowed = /[^\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF\s]/g;
+  const pos = input.selectionStart;
+  const oldLen = input.value.length;
+  input.value = input.value.replace(allowed, '');
+  const diff = oldLen - input.value.length;
+  try{ input.setSelectionRange(pos - diff, pos - diff); }catch(e){}
+}
+function enforceArabicOnly(input){
+  const allowed = /[^\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF\s]/g;
+  const pos = input.selectionStart;
+  const oldLen = input.value.length;
+  input.value = input.value.replace(allowed, '');
+  const diff = oldLen - input.value.length;
+  try{ input.setSelectionRange(pos - diff, pos - diff); }catch(e){}
+}
+
+// ═══════════════════════════════════════════════════
+// COORDINATOR MANAGEMENT
+// ═══════════════════════════════════════════════════
+function generateUID20(){
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let uid = '';
+  for(let i=0;i<20;i++) uid += chars[Math.floor(Math.random()*chars.length)];
+  return uid;
+}
+
+let _currentCoordUID = generateUID20();
+
+function generateCoordUID(){
+  _currentCoordUID = generateUID20();
+  const el = document.getElementById('coord-uid-preview');
+  if(el) el.textContent = _currentCoordUID;
+}
+
+function switchBranchDataTab(tab){
+  ['download','upload','delete'].forEach(t=>{
+    const content = document.getElementById('branch-data-tab-'+t+'-content');
+    const btn = document.getElementById('branch-data-tab-'+t);
+    if(content) content.style.display = t===tab?'block':'none';
+    if(btn){
+      btn.style.background = t===tab?'var(--accent)':'var(--surface2)';
+      btn.style.color = t===tab?'white':'var(--text2)';
+    }
+  });
+}
+
+
+function switchCoordTab(tab){
+  ['manual','excel','list'].forEach(t=>{
+    document.getElementById('coord-tab-'+t+'-content').style.display = t===tab?'block':'none';
+    const btn = document.getElementById('coord-tab-'+t);
+    btn.style.background = t===tab?'var(--accent)':'var(--surface2)';
+    btn.style.color = t===tab?'white':'var(--text2)';
+  });
+  if(tab==='list') renderCoordList();
+  if(tab==='manual') generateCoordUID();
+}
+
+function addCoordinatorManual(){
+  const nameEl = document.getElementById('coord-name-input');
+  const idEl = document.getElementById('coord-id-input');
+  const name = nameEl.value.trim();
+  const id = idEl.value.trim();
+  let ok = true;
+  document.getElementById('err-coord-name').textContent='';
+  document.getElementById('err-coord-id').textContent='';
+  // Validate name: Arabic only, 4 words minimum
+  if(!name){ document.getElementById('err-coord-name').textContent='⚠️ الاسم مطلوب'; ok=false; }
+  else if(!/^[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF\s]+$/.test(name)){ document.getElementById('err-coord-name').textContent='⚠️ الاسم يجب أن يكون بالعربية فقط بدون رموز'; ok=false; }
+  else if(name.trim().split(/\s+/).length < 4){ document.getElementById('err-coord-name').textContent='⚠️ الاسم يجب أن يكون رباعياً (4 كلمات على الأقل)'; ok=false; }
+  // Validate ID: 14 digits
+  if(!id){ document.getElementById('err-coord-id').textContent='⚠️ رقم البطاقة مطلوب'; ok=false; }
+  else if(!/^\d{14}$/.test(id)){ document.getElementById('err-coord-id').textContent='⚠️ رقم البطاقة يجب أن يكون 14 رقماً بالضبط'; ok=false; }
+  if(!ok) return;
+  const list = getCoordinators();
+  const exists = list.find(x=>x.id===id);
+  if(exists){ document.getElementById('err-coord-id').textContent='⚠️ هذا الرقم مضاف مسبقاً'; return; }
+  list.unshift({name, id, uid: _currentCoordUID, addedAt: new Date().toISOString()});
+  localStorage.setItem('adhoc_coordinators', JSON.stringify(list));
+  nameEl.value=''; idEl.value='';
+  generateCoordUID();
+  const res = document.getElementById('coord-add-result');
+  res.style.display='block'; res.style.color='var(--success)';
+  res.textContent = '✅ تم إضافة ' + name + ' بنجاح';
+  setTimeout(()=>res.style.display='none', 3000);
+  toast('✅ تم إضافة المنسق');
+}
+
+function renderCoordList(search=''){
+  const list = getCoordinators().filter(x=>
+    !search || x.name.includes(search) || x.id.includes(search)
+  );
+  document.getElementById('coord-list-count').textContent = 'إجمالي: ' + getCoordinators().length + ' منسق';
+  const container = document.getElementById('coord-list-container');
+  if(!list.length){ container.innerHTML='<div style="text-align:center;color:var(--text3);font-size:13px;padding:20px">لا توجد نتائج</div>'; return; }
+  container.innerHTML = list.map((x,i)=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--border);border-radius:10px;margin-bottom:6px;background:var(--surface2)">
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:13px">${x.name}</div>
+        <div style="font-size:11px;color:var(--text3);direction:ltr;display:flex;gap:10px">
+          <span>🪪 ${x.id}</span>
+          <span style="color:var(--accent)">🔑 ${x.uid||'—'}</span>
+        </div>
+      </div>
+      <button onclick="deleteCoordinator('${x.id}')" style="background:var(--danger);border:none;color:white;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:12px">🗑️</button>
+    </div>`).join('');
+}
+
+function deleteCoordinator(id){
+  if(!confirm('حذف هذا المنسق؟')) return;
+  const list = getCoordinators().filter(x=>x.id!==id);
+  localStorage.setItem('adhoc_coordinators', JSON.stringify(list));
+  renderCoordList(document.getElementById('coord-list-search').value);
+  toast('🗑️ تم الحذف');
+}
+
+function clearAllCoordinators(){
+  if(!confirm('⚠️ حذف كل المنسقين من القائمة؟')) return;
+  localStorage.setItem('adhoc_coordinators','[]');
+  renderCoordList();
+  toast('🗑️ تم حذف كل المنسقين');
+}
+
+function downloadCoordList(){
+  const list = getCoordinators();
+  if(!list.length){ toast('⚠️ القائمة فارغة'); return; }
+  let csv = '\uFEFFالاسم,رقم البطاقة,UID\n';
+  list.forEach(x=>{ csv+=`"${x.name}","${x.id}","${x.uid||''}"\n`; });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download = 'adhoc_coordinators.csv';
+  a.click();
+  toast('✅ تم تحميل قائمة المنسقين');
+}
+
+function downloadCoordSample(){
+  const csv = '\uFEFFاسم المنسق,رقم البطاقة\nأحمد محمد علي إبراهيم,29901011234567\nمحمد أحمد سيد حسن,30001021234568\n';
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download = 'sample_coordinators.csv';
+  a.click();
+}
+
+// Pending coord rows from Excel
+let pendingCoordRows = [];
+
+function handleCoordExcelUpload(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  if(ext==='csv'){
+    const reader = new FileReader();
+    reader.onload = ev=>{
+      const lines = ev.target.result.split('\n').filter(l=>l.trim());
+      // Skip header row
+      const rows = lines.slice(1).map(l=>{
+        const parts = l.split(',').map(p=>p.replace(/^"|"$/g,'').trim());
+        return {name: parts[0]||'', id: (parts[1]||'').replace(/\D/g,'')};
+      }).filter(r=>r.name && r.id);
+      showCoordExcelPreview(rows);
+    };
+    reader.readAsText(file,'UTF-8');
+  } else {
+    // xlsx - use SheetJS if available, else show error
+    if(typeof XLSX !== 'undefined'){
+      const reader = new FileReader();
+      reader.onload = ev=>{
+        const wb = XLSX.read(ev.target.result,{type:'array'});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const data = XLSX.utils.sheet_to_json(ws,{header:1});
+        const rows = data.slice(1).map(r=>({
+          name: String(r[0]||'').trim(),
+          id: String(r[1]||'').replace(/\D/g,'').trim()
+        })).filter(r=>r.name&&r.id);
+        showCoordExcelPreview(rows);
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      toast('⚠️ ارفع ملف CSV بدلاً من xlsx');
+    }
+  }
+  e.target.value='';
+}
+
+function showCoordExcelPreview(rows){
+  pendingCoordRows = rows;
+  document.getElementById('coord-excel-title').textContent = `${rows.length} منسق جاهز للإضافة`;
+  const tbody = document.getElementById('coord-excel-body');
+  tbody.innerHTML = rows.map((r,i)=>`
+    <tr>
+      <td style="padding:6px 8px;border:1px solid var(--border)">${r.name}</td>
+      <td style="padding:6px 8px;border:1px solid var(--border);direction:ltr">${r.id}</td>
+      <td style="padding:6px 8px;border:1px solid var(--border);text-align:center">
+        <button onclick="removePendingCoord(${i})" style="background:none;border:none;cursor:pointer;color:var(--danger)">✕</button>
+      </td>
+    </tr>`).join('');
+  document.getElementById('coord-excel-preview').style.display='block';
+}
+
+function removePendingCoord(i){
+  pendingCoordRows.splice(i,1);
+  showCoordExcelPreview(pendingCoordRows);
+}
+
+function insertCoordExcelData(){
+  if(!pendingCoordRows.length){ toast('⚠️ لا توجد بيانات'); return; }
+  let list = getCoordinators();
+  let added = 0, skipped = 0;
+  pendingCoordRows.forEach(r=>{
+    const nameOk = /^[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF\s]+$/.test(r.name) && r.name.trim().split(/\s+/).length>=4;
+    const idOk = /^\d{14}$/.test(r.id);
+    if(!nameOk||!idOk){ skipped++; return; }
+    if(list.find(x=>x.id===r.id)){ skipped++; return; }
+    list.unshift({name:r.name, id:r.id, uid:generateUID20(), addedAt:new Date().toISOString()});
+    added++;
+  });
+  localStorage.setItem('adhoc_coordinators', JSON.stringify(list));
+  clearCoordExcelPreview();
+  toast(`✅ تمت إضافة ${added} منسق${skipped?` · تجاهل ${skipped}`:''}`);
+}
+
+function clearCoordExcelPreview(){
+  pendingCoordRows=[];
+  document.getElementById('coord-excel-preview').style.display='none';
+  document.getElementById('coord-excel-body').innerHTML='';
+}
+
 function getCoordinators(){
   try{ return JSON.parse(localStorage.getItem('adhoc_coordinators')||'[]'); }
   catch{ return []; }
 }
+
 function saveCoordinator(name, id){
   if(!name||!id) return;
   const list = getCoordinators();
@@ -1173,17 +1603,50 @@ function saveCoordinator(name, id){
     localStorage.setItem('adhoc_coordinators', JSON.stringify(list));
   }
 }
+// ── Project change: enable/disable name field ──
+function onProjectChange(val){
+  const nameInput = document.getElementById('f-name');
+  if(val){
+    nameInput.disabled = false;
+    nameInput.style.opacity = '1';
+    nameInput.style.cursor = 'text';
+    nameInput.placeholder = 'أحمد محمد علي إبراهيم';
+  } else {
+    nameInput.disabled = true;
+    nameInput.style.opacity = '.5';
+    nameInput.style.cursor = 'not-allowed';
+    nameInput.placeholder = 'اختر المشروع أولاً لتفعيل هذا الحقل';
+    nameInput.value = '';
+    document.getElementById('ac-name').style.display='none';
+  }
+}
+
 function acName(val){
   const box = document.getElementById('ac-name');
   if(!val || val.length < 2){ box.style.display='none'; return; }
-  const list = getCoordinators().filter(x=>x.name.includes(val));
+  const selectedProject = document.getElementById('f-products').value;
+  let list = getCoordinators();
+  // فلتر بالمشروع إذا كان المنسق عنده مشروع محدد
+  if(selectedProject){
+    const withProject = list.filter(x => x.project && x.project === selectedProject);
+    // لو فيه منسقين مخصصين للمشروع ده، اعرضهم بس
+    // لو مفيش، اعرض الكل (fallback)
+    if(withProject.length > 0) list = withProject;
+  }
+  list = list.filter(x=>x.name.includes(val));
   if(!list.length){ box.style.display='none'; return; }
-  box.innerHTML = list.slice(0,8).map(x=>`
+  box.innerHTML = list.slice(0,10).map(x=>`
     <div onclick="pickCoord('${x.name.replace(/'/g,"\\'")}','${x.id}')"
-      style="padding:12px 14px;cursor:pointer;border-bottom:1px solid var(--border);font-size:14px;display:flex;justify-content:space-between;align-items:center"
+      style="padding:12px 14px;cursor:pointer;border-bottom:1px solid var(--border);font-size:14px"
       onmouseover="this.style.background='var(--surface)'" onmouseout="this.style.background=''">
-      <span style="font-weight:700">${x.name}</span>
-      <span style="color:var(--text2);font-size:12px;direction:ltr">${x.id}</span>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-weight:700">${x.name}</span>
+        <span style="color:var(--text2);font-size:12px;direction:ltr">${x.id}</span>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:3px;flex-wrap:wrap">
+        ${x.project?`<span style="font-size:10px;background:rgba(255,107,53,.15);color:var(--accent);padding:2px 8px;border-radius:10px">🗂️ ${x.project}</span>`:''}
+        ${x.uid?`<span style="font-size:10px;color:var(--text3);font-family:monospace">🔑 ${x.uid}</span>`:''}
+      </div>
     </div>`).join('');
   box.style.display='block';
 }
@@ -1209,55 +1672,107 @@ function pickCoord(name, id){
 function hideAC(id){ document.getElementById(id).style.display='none'; }
 
 // ═══ Google Drive Auto-Save ═══
-const DRIVE_API_URL = 'https://script.google.com/macros/s/AKfycbxR5yxsoKBlYb4daoUxn1psOmfgMjGrx6vWYwMb029sTRbPnLKBXnsYhBBsVc9eRxx5OQ/exec';
+const DEFAULT_DRIVE_URL = 'https://script.google.com/macros/s/AKfycby7lyVSlNTr_wVK7zSxVEUTqUazlPZa79KaNwWXTXPdR3hjHi5qRBS0DmSBXrJ8NhzK/exec';
+
+function getDriveURL(){
+  return localStorage.getItem('adhoc_drive_url') || DEFAULT_DRIVE_URL;
+}
+
+function saveDriveURL(){
+  const val = document.getElementById('drive-url-input').value.trim();
+  const res = document.getElementById('drive-url-result');
+  if(!val){
+    showDriveResult('⚠️ أدخل الرابط أولاً', 'var(--warn)');
+    return;
+  }
+  if(!val.startsWith('https://script.google.com/')){
+    showDriveResult('❌ الرابط غير صحيح — يجب أن يبدأ بـ https://script.google.com/', 'var(--danger)');
+    return;
+  }
+  localStorage.setItem('adhoc_drive_url', val);
+  loadDriveURLDisplay();
+  showDriveResult('✅ تم حفظ الرابط بنجاح', 'var(--success)');
+  toast('✅ تم تحديث رابط Google Drive');
+}
+
+function resetDriveURL(){
+  if(!confirm('استعادة الرابط الافتراضي؟')) return;
+  localStorage.removeItem('adhoc_drive_url');
+  document.getElementById('drive-url-input').value = '';
+  loadDriveURLDisplay();
+  showDriveResult('↩️ تم استعادة الرابط الافتراضي', 'var(--accent)');
+  toast('↩️ تم استعادة الرابط الافتراضي');
+}
+
+async function testDriveURL(){
+  const url = getDriveURL();
+  showDriveResult('⏳ جاري الاختبار...', 'var(--text2)');
+  try{
+    const res = await fetch(url, {method:'POST', body: JSON.stringify({test:true})});
+    if(res.ok || res.status===302 || res.status===200){
+      showDriveResult('✅ الرابط يعمل بنجاح', 'var(--success)');
+    } else {
+      showDriveResult('⚠️ الرابط يرد بكود: '+res.status, 'var(--warn)');
+    }
+  } catch(e){
+    showDriveResult('⚠️ تعذر الاتصال (قد يكون CORS) — جرب الحفظ الفعلي', 'var(--warn)');
+  }
+}
+
+function showDriveResult(msg, color){
+  const el = document.getElementById('drive-url-result');
+  el.style.display = 'block';
+  el.style.color = color;
+  el.style.background = color.includes('success') ? 'rgba(34,197,94,.08)' : color.includes('danger') ? 'rgba(239,68,68,.08)' : 'rgba(255,255,255,.05)';
+  el.style.border = '1px solid '+color;
+  el.textContent = msg;
+  setTimeout(()=>el.style.display='none', 4000);
+}
+
+function loadDriveURLDisplay(){
+  const url = getDriveURL();
+  const el = document.getElementById('drive-url-current');
+  if(!el) return;
+  // اعرض أول 60 حرف فقط
+  el.textContent = url.length > 60 ? url.substring(0,60)+'...' : url;
+  // حط الرابط الحالي في الـ input لو فاضي
+  const input = document.getElementById('drive-url-input');
+  if(input && !input.value) input.value = localStorage.getItem('adhoc_drive_url') || '';
+}
 
 async function saveToDrive(rec){
   try{
-    // بناء محتوى Word بنفس شكل التفويض
     const savedState = {...state};
     state = {...rec};
     const tmpl = TEMPLATE_MAP[rec.chain]||'general';
     const delegHTML = buildDelegation(tmpl);
     state = savedState;
 
-    const wordHTML = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-    <head><meta charset="UTF-8">
-    <xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom><w:DoNotOptimizeForBrowser/></w:WordDocument></xml>
-    <style>
-    @page{margin:2cm}
-    body{font-family:'Traditional Arabic',Arial,sans-serif;direction:rtl;font-size:14pt;color:#1a1a2e}
-    .delegation-preview{font-size:14pt;line-height:1.8}
-    .prev-company{font-size:12pt;text-align:center;color:#555;margin-bottom:10pt}
-    .prev-title{font-size:18pt;font-weight:bold;text-align:center;margin-bottom:4pt}
-    .prev-line{border-bottom:2pt solid #1a1a2e;margin-bottom:12pt}
-    .prev-field{display:flex;gap:8pt;margin-bottom:6pt;font-weight:bold}
-    .prev-key{color:#444;min-width:130pt}
-    .prev-val{font-weight:bold}
-    .prev-para{margin:8pt 0;line-height:1.8}
-    .prev-sigs{display:flex;justify-content:space-around;margin-top:40pt}
-    .prev-sig{text-align:center;font-weight:bold;font-size:12pt}
-    .prev-sig-line{width:100pt;border-bottom:1pt solid #1a1a2e;margin:0 auto 8pt;height:36pt}
-    </style></head><body>${delegHTML}</body></html>`;
+    const wordHTML = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset="UTF-8"><xml><w:WordDocument><w:View>Print</w:View></w:WordDocument></xml><style>@page{margin:2cm}body{font-family:'Traditional Arabic',Arial,sans-serif;direction:rtl;font-size:14pt;color:#1a1a2e}.delegation-preview{font-size:14pt;line-height:1.8}.prev-company{font-size:12pt;text-align:center;color:#555}.prev-title{font-size:18pt;font-weight:bold;text-align:center}.prev-line{border-bottom:2pt solid #1a1a2e;margin-bottom:12pt}.prev-field{display:flex;gap:8pt;margin-bottom:6pt}.prev-key{color:#444;min-width:130pt}.prev-val{font-weight:bold}.prev-para{margin:8pt 0}.prev-sigs{display:flex;justify-content:space-around;margin-top:40pt}.prev-sig{text-align:center;font-weight:bold}.prev-sig-line{width:100pt;border-bottom:1pt solid #1a1a2e;margin:0 auto 8pt;height:36pt}</style></head><body>${delegHTML}</body></html>`;
 
     const payload = {
-      id: rec.id,
-      name: rec.name || '',
-      chain: rec.chain || '',
-      branch: rec.branch || '',
+      id: rec.id, name: rec.name||'', chain: rec.chain||'', branch: rec.branch||'',
       date: new Date().toISOString().split('T')[0],
-      wordContent: wordHTML,
-      fileType: 'word'
+      wordContent: wordHTML, fileType: 'word'
     };
-    const res = await fetch(DRIVE_API_URL, {
+
+    const controller = new AbortController();
+    const timeout = setTimeout(()=>controller.abort(), 10000); // 10s timeout
+
+    const res = await fetch(getDriveURL(), {
       method:'POST',
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      signal: controller.signal
     });
+    clearTimeout(timeout);
+
     const json = await res.json();
     if(json.success){
       toast('☁️ تم الحفظ على Google Drive تلقائياً');
     }
   } catch(e){
-    console.warn('Drive save failed:', e);
+    // صامت — لا نزعج المستخدم بأخطاء الـ Drive
+    console.warn('Drive save failed:', e.message||e);
   }
 }
 
@@ -1296,23 +1811,29 @@ function saveOnly(){
 }
 function printPreview(){
   const content=document.getElementById('preview-content').innerHTML;
-  const w=window.open('','_blank');
-  w.document.write(`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>تفويض - ${state.name}</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
-  <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Cairo',sans-serif;direction:rtl;padding:24px;background:white;color:#1a1a2e}
-  .delegation-preview{font-size:14px;line-height:1.9}
-  .prev-company{font-size:13px;text-align:center;color:#555;margin-bottom:14px}
-  .prev-title{font-size:22px;font-weight:900;text-align:center;margin-bottom:4px}
-  .prev-line{border-bottom:2px solid #1a1a2e;margin-bottom:14px}
-  .prev-field{display:flex;gap:8px;margin-bottom:8px;font-weight:600}
-  .prev-key{color:#555;min-width:140px;flex-shrink:0}
-  .prev-val{font-weight:700}
-  .prev-para{margin:10px 0;line-height:1.8}
-  .prev-sigs{display:flex;justify-content:space-around;margin-top:50px}
-  .prev-sig{text-align:center;font-weight:700;font-size:13px}
-  .prev-sig-line{width:110px;border-bottom:1.5px solid #1a1a2e;margin:0 auto 10px;height:40px}
-  @media print{body{padding:10px}}</style></head><body>${content}</body></html>`);
-  w.document.close();setTimeout(()=>w.print(),500);
+  const printCSS=`*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Cairo',sans-serif;direction:rtl;padding:24px;background:white;color:#1a1a2e}.delegation-preview{font-size:14px;line-height:1.9}.prev-company{font-size:13px;text-align:center;color:#555;margin-bottom:14px}.prev-title{font-size:22px;font-weight:900;text-align:center;margin-bottom:4px}.prev-line{border-bottom:2px solid #1a1a2e;margin-bottom:14px}.prev-field{display:flex;gap:8px;margin-bottom:8px;font-weight:600}.prev-key{color:#555;min-width:140px;flex-shrink:0}.prev-val{font-weight:700}.prev-para{margin:10px 0;line-height:1.8}.prev-sigs{display:flex;justify-content:space-around;margin-top:50px}.prev-sig{text-align:center;font-weight:700;font-size:13px}.prev-sig-line{width:110px;border-bottom:1.5px solid #1a1a2e;margin:0 auto 10px;height:40px}@media print{.no-print{display:none}body{padding:10px}}`;
+  try{
+    const w=window.open('','_blank');
+    if(w && w.document){
+      w.document.write(`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>تفويض - ${state.name||''}</title><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet"><style>${printCSS}</style></head><body>${content}</body></html>`);
+      w.document.close();
+      setTimeout(()=>{try{w.print();}catch(e){console.warn('print error',e);}},600);
+    } else {
+      // Fallback: Blob URL
+      printViaBlob(content, printCSS);
+    }
+  } catch(e){
+    printViaBlob(content, printCSS);
+  }
+}
+
+function printViaBlob(content, css){
+  const html=`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>تفويض</title><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet"><style>${css}</style></head><body>${content}<div class="no-print" style="text-align:center;margin-top:20px;font-family:sans-serif"><button onclick="window.print()" style="background:#ff6b35;color:white;border:none;padding:12px 28px;border-radius:10px;font-size:15px;cursor:pointer">🖨️ طباعة / حفظ PDF</button></div></body></html>`;
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.target='_blank'; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),5000);
 }
 
 // ─────────────────────── HISTORY ───────────────────────
@@ -1368,17 +1889,84 @@ function exportHistory(){
 
 // ─────────────────────── ANALYTICS ───────────────────────
 let chartsInited=false;
+// ═══ PROJECTS ═══
+const DEFAULT_PROJECTS = ['هاينز','بيبسيكو','إيديتا','بروكتور','فرونيري'];
+function getProjects(){
+  const stored = localStorage.getItem('adhoc_projects');
+  if(!stored) return [...DEFAULT_PROJECTS];
+  try{ return JSON.parse(stored); } catch{ return [...DEFAULT_PROJECTS]; }
+}
+function saveProjects(list){ localStorage.setItem('adhoc_projects', JSON.stringify(list)); }
+
+function populateProjectSelect(){
+  const sel = document.getElementById('f-products');
+  if(!sel) return;
+  const projs = getProjects();
+  sel.innerHTML = '<option value="">-- اختر المشروع --</option>' +
+    projs.map(p=>`<option value="${p}">${p}</option>`).join('');
+}
+
+function switchProjTab(tab){
+  ['list','add'].forEach(t=>{
+    document.getElementById('proj-tab-'+t+'-content').style.display = t===tab?'block':'none';
+    const btn = document.getElementById('proj-tab-'+t);
+    btn.style.background = t===tab?'var(--accent)':'var(--surface2)';
+    btn.style.color = t===tab?'white':'var(--text2)';
+  });
+  if(tab==='list') renderProjAdminList();
+}
+
+function renderProjAdminList(){
+  const list = getProjects();
+  const el = document.getElementById('proj-admin-list');
+  if(!el) return;
+  if(!list.length){ el.innerHTML='<div style="text-align:center;color:var(--text3);font-size:13px;padding:20px">لا توجد مشاريع</div>'; return; }
+  el.innerHTML = list.map((p,i)=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--border);border-radius:10px;margin-bottom:6px;background:var(--surface2)">
+      <span style="font-weight:700;font-size:14px">🗂️ ${p}</span>
+      <button onclick="deleteProject(${i})" style="background:var(--danger);border:none;color:white;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:12px">🗑️</button>
+    </div>`).join('');
+}
+
+function addProject(){
+  const inp = document.getElementById('proj-new-name');
+  const name = inp.value.trim();
+  const err = document.getElementById('err-proj-name');
+  err.textContent='';
+  if(!name){ err.textContent='⚠️ أدخل اسم المشروع'; return; }
+  const list = getProjects();
+  if(list.includes(name)){ err.textContent='⚠️ المشروع موجود مسبقاً'; return; }
+  list.push(name);
+  saveProjects(list);
+  inp.value='';
+  renderProjAdminList();
+  populateProjectSelect();
+  toast('✅ تم إضافة المشروع: '+name);
+}
+
+function deleteProject(i){
+  if(!confirm('حذف هذا المشروع؟')) return;
+  const list = getProjects();
+  list.splice(i,1);
+  saveProjects(list);
+  renderProjAdminList();
+  populateProjectSelect();
+  toast('🗑️ تم حذف المشروع');
+}
+
+// ═══ ANALYTICS ═══
 function initAnalytics(){
   const all=getMyHistory();
   const now=new Date();
 
-  // KPIs
   const today=all.filter(d=>new Date(d.createdAt).toDateString()===now.toDateString()).length;
   const week=all.filter(d=>(now-new Date(d.createdAt))<7*86400000).length;
   const month=all.filter(d=>new Date(d.createdAt).getMonth()===now.getMonth()).length;
   const active=all.filter(d=>parseDate(d.to)>now).length;
   const expired=all.filter(d=>parseDate(d.to)<=now).length;
-  const soon=all.filter(d=>{const diff=(parseDate(d.to)-now)/86400000;return diff>0&&diff<=30}).length;
+  const red=all.filter(d=>{const diff=(parseDate(d.to)-now)/86400000;return diff>0&&diff<15;}).length;
+  const yellow=all.filter(d=>{const diff=(parseDate(d.to)-now)/86400000;return diff>=15&&diff<30;}).length;
+  const green=all.filter(d=>{const diff=(parseDate(d.to)-now)/86400000;return diff>=30;}).length;
 
   document.getElementById('kpi-grid').innerHTML=`
     <div class="kpi-card"><div class="kpi-num orange">${today}</div><div class="kpi-label">اليوم</div></div>
@@ -1388,18 +1976,175 @@ function initAnalytics(){
     <div class="kpi-card"><div class="kpi-num green">${active}</div><div class="kpi-label">سارية</div></div>
     <div class="kpi-card"><div class="kpi-num red">${expired}</div><div class="kpi-label">منتهية</div></div>`;
 
-  // Daily chart
+  // ── Chains bar table ──
+  const chainCount={};
+  all.forEach(d=>{chainCount[d.chain]=(chainCount[d.chain]||0)+1});
+  const topChains=Object.entries(chainCount).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const maxC = topChains.length ? topChains[0][1] : 1;
+  const chainsEl = document.getElementById('chains-bar-table');
+  if(chainsEl){
+    chainsEl.innerHTML = topChains.length ? topChains.map(([name,count])=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)">
+        <div style="min-width:80px;font-size:12px;font-weight:600;text-align:right;color:var(--text)">${name}</div>
+        <div style="flex:1;background:var(--surface2);border-radius:6px;height:18px;overflow:hidden">
+          <div style="width:${Math.round(count/maxC*100)}%;background:var(--accent);height:100%;border-radius:6px;transition:width .4s"></div>
+        </div>
+        <div style="min-width:24px;font-size:13px;font-weight:700;color:var(--accent)">${count}</div>
+      </div>`).join('') : '<div style="text-align:center;color:var(--text3);font-size:13px;padding:20px">لا توجد بيانات</div>';
+  }
+
+  // ── Expiry bar table ──
+  const expiryEl = document.getElementById('expiry-bar-table');
+  if(expiryEl){
+    const expiryTotal = red+yellow+green || 1;
+    expiryEl.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="switchExpiryTab('red');goTo('expiry-screen')">
+        <div style="min-width:110px;font-size:12px;font-weight:600;color:#ef4444">🔴 أقل من 15 يوم</div>
+        <div style="flex:1;background:var(--surface2);border-radius:6px;height:18px;overflow:hidden">
+          <div style="width:${Math.round(red/expiryTotal*100)}%;background:#ef4444;height:100%;border-radius:6px"></div>
+        </div>
+        <div style="min-width:24px;font-size:13px;font-weight:700;color:#ef4444">${red}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="switchExpiryTab('yellow');goTo('expiry-screen')">
+        <div style="min-width:110px;font-size:12px;font-weight:600;color:#f59e0b">🟡 15 إلى 30 يوم</div>
+        <div style="flex:1;background:var(--surface2);border-radius:6px;height:18px;overflow:hidden">
+          <div style="width:${Math.round(yellow/expiryTotal*100)}%;background:#f59e0b;height:100%;border-radius:6px"></div>
+        </div>
+        <div style="min-width:24px;font-size:13px;font-weight:700;color:#f59e0b">${yellow}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;padding:7px 0;cursor:pointer" onclick="switchExpiryTab('green');goTo('expiry-screen')">
+        <div style="min-width:110px;font-size:12px;font-weight:600;color:#22c55e">🟢 أكثر من 30 يوم</div>
+        <div style="flex:1;background:var(--surface2);border-radius:6px;height:18px;overflow:hidden">
+          <div style="width:${Math.round(green/expiryTotal*100)}%;background:#22c55e;height:100%;border-radius:6px"></div>
+        </div>
+        <div style="min-width:24px;font-size:13px;font-weight:700;color:#22c55e">${green}</div>
+      </div>`;
+  }
+
+  // ── Daily chart ──
   const days=[];const dayCounts=[];
   for(let i=6;i>=0;i--){const d=new Date(now);d.setDate(d.getDate()-i);days.push(d.toLocaleDateString('ar-EG',{weekday:'short'}));dayCounts.push(all.filter(x=>new Date(x.createdAt).toDateString()===d.toDateString()).length)}
   renderChart('chart-daily','line',days,dayCounts,'التفويضات اليومية','#ff6b35');
+}
 
-  // Chains chart
-  const chainCount={};all.forEach(d=>{chainCount[d.chain]=(chainCount[d.chain]||0)+1});
-  const topChains=Object.entries(chainCount).sort((a,b)=>b[1]-a[1]).slice(0,6);
-  renderChart('chart-chains','bar',topChains.map(x=>x[0].substring(0,8)),topChains.map(x=>x[1]),'أكثر السلاسل','#ff4081');
+// ═══ EXPIRY DETAILS ═══
+let _currentExpiryTab = 'red';
+function switchExpiryTab(tab){
+  _currentExpiryTab = tab;
+  const colors = {red:'#ef4444',yellow:'#f59e0b',green:'#22c55e'};
+  ['red','yellow','green'].forEach(t=>{
+    const btn = document.getElementById('exp-tab-'+t);
+    if(btn){
+      btn.style.background = t===tab ? colors[t] : 'var(--surface2)';
+      btn.style.color = t===tab ? 'white' : 'var(--text2)';
+    }
+  });
+  renderExpiryList(tab);
+}
 
-  // Status pie
-  renderPieChart('chart-status',['سارية','منتهية','تنتهي قريباً'],[active,expired,soon],['#22c55e','#ef4444','#f59e0b']);
+function renderExpiryList(tab){
+  const all = getMyHistory();
+  const now = new Date();
+  let items;
+  if(tab==='red') items = all.filter(d=>{const diff=(parseDate(d.to)-now)/86400000;return diff>0&&diff<15;});
+  else if(tab==='yellow') items = all.filter(d=>{const diff=(parseDate(d.to)-now)/86400000;return diff>=15&&diff<30;});
+  else items = all.filter(d=>{const diff=(parseDate(d.to)-now)/86400000;return diff>=30;});
+
+  const el = document.getElementById('expiry-list');
+  if(!el) return;
+  el.innerHTML = '';
+
+  if(!items.length){
+    const empty = document.createElement('div');
+    empty.style.cssText = 'text-align:center;color:var(--text3);font-size:13px;padding:40px';
+    empty.textContent = 'لا توجد تفويضات في هذه الفئة';
+    el.appendChild(empty);
+    return;
+  }
+
+  // Group by project → chain → records
+  const byProject = {};
+  items.forEach(d=>{
+    const proj = d.products || 'بدون مشروع';
+    if(!byProject[proj]) byProject[proj]={};
+    if(!byProject[proj][d.chain]) byProject[proj][d.chain]=[];
+    byProject[proj][d.chain].push(d);
+  });
+
+  const color = tab==='red'?'#ef4444':tab==='yellow'?'#f59e0b':'#22c55e';
+
+  Object.entries(byProject).forEach(([proj, chains])=>{
+    const totalRecs = Object.values(chains).flat().length;
+
+    // Project folder wrapper
+    const projWrap = document.createElement('div');
+    projWrap.style.cssText = 'margin:10px;border:1px solid '+color+'44;border-radius:12px;overflow:hidden';
+
+    // Project header
+    const projHdr = document.createElement('div');
+    projHdr.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:'+color+'18;cursor:pointer;font-weight:700;font-size:14px';
+    projHdr.innerHTML = '<span>📁 '+proj+'</span><span style="color:'+color+';font-size:12px">'+totalRecs+' تفويض ▼</span>';
+
+    // Project body (hidden)
+    const projBody = document.createElement('div');
+    projBody.style.display = 'none';
+
+    projHdr.addEventListener('click', ()=>{
+      projBody.style.display = projBody.style.display==='none' ? 'block' : 'none';
+      const arr = projHdr.querySelector('span:last-child');
+      arr.textContent = totalRecs + (projBody.style.display==='none' ? ' تفويض ▼' : ' تفويض ▲');
+    });
+
+    // Chains inside project
+    Object.entries(chains).forEach(([chain, recs])=>{
+      const chainWrap = document.createElement('div');
+      chainWrap.style.borderTop = '1px solid var(--border)';
+
+      const chainHdr = document.createElement('div');
+      chainHdr.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:11px 16px 11px 20px;background:var(--surface2);cursor:pointer;font-weight:600;font-size:13px';
+      chainHdr.innerHTML = '<span>🏪 '+chain+'</span><span style="color:var(--text3);font-size:12px">'+recs.length+' ▼</span>';
+
+      const chainBody = document.createElement('div');
+      chainBody.style.display = 'none';
+
+      chainHdr.addEventListener('click', ()=>{
+        chainBody.style.display = chainBody.style.display==='none' ? 'block' : 'none';
+        const arr = chainHdr.querySelector('span:last-child');
+        arr.textContent = recs.length + (chainBody.style.display==='none' ? ' ▼' : ' ▲');
+      });
+
+      // Records inside chain
+      recs.forEach(r=>{
+        const diff = Math.ceil((parseDate(r.to)-now)/86400000);
+        const row = document.createElement('div');
+        row.style.cssText = 'padding:10px 20px 10px 16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center';
+        row.innerHTML =
+          '<div>'+
+            '<div style="font-size:13px;font-weight:600">'+r.branch+'</div>'+
+            '<div style="font-size:11px;color:var(--text3)">'+r.name+' · '+r.to+'</div>'+
+          '</div>'+
+          '<div style="color:'+color+';font-size:12px;font-weight:700">'+diff+' يوم</div>';
+        chainBody.appendChild(row);
+      });
+
+      chainWrap.appendChild(chainHdr);
+      chainWrap.appendChild(chainBody);
+      projBody.appendChild(chainWrap);
+    });
+
+    projWrap.appendChild(projHdr);
+    projWrap.appendChild(projBody);
+    el.appendChild(projWrap);
+  });
+}
+
+function toggleProjFolder(el){
+  const content = el.nextElementSibling;
+  if(content) content.style.display = content.style.display==='none'?'block':'none';
+}
+function toggleChainFolder(el){
+  const content = el.nextElementSibling;
+  if(content) content.style.display = content.style.display==='none'?'block':'none';
 }
 
 function renderChart(id,type,labels,data,label,color){
@@ -1412,7 +2157,21 @@ function renderPieChart(id,labels,data,colors){
   if(charts[id])charts[id].destroy();
   charts[id]=new Chart(ctx,{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:colors}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#888',font:{size:11},padding:12}}}}})}
 
-function exportAnalytics(){toast('📥 لتصدير التقارير استخدم زر التاريخ')}
+function exportAnalytics(){
+  const all=getMyHistory();
+  if(!all.length){toast('⚠️ لا توجد تفويضات');return;}
+  const hdr = ['اسم المنسق','البطاقة','السلسلة','الفرع','من','إلى','المشروع','أيام متبقية'].join(',');
+  const now=new Date();
+  const rows = all.map(d=>{
+    const diff=Math.ceil((parseDate(d.to)-now)/86400000);
+    return '"'+d.name+'","'+d.id+'","'+d.chain+'","'+d.branch+'","'+d.from+'","'+d.to+'","'+(d.products||'')+'","'+(diff>0?diff:'منتهي')+'"';
+  }).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['\uFEFF'+hdr+'\n'+rows],{type:'text/csv;charset=utf-8'}));
+  a.download='adhoc_analytics_'+new Date().toISOString().split('T')[0]+'.csv';
+  a.click();
+  toast('✅ تم تصدير الإحصاءات');
+}
 
 // ─────────────────────── ADMIN ───────────────────────
 function updateAdminData(){
@@ -1716,6 +2475,8 @@ window.goTo=function(id){
   if(id==='chain-screen'){renderChains(allChains);document.getElementById('chain-search').value=''}
   if(id==='history-screen'){renderHistory(getMyHistory());document.getElementById('history-search').value=''}
   if(id==='analytics-screen'){setTimeout(initAnalytics,100)}
+  if(id==='expiry-screen'){switchExpiryTab(_currentExpiryTab||'red')}
+  if(id==='admin-screen'){updateAdminData();renderProjAdminList();setTimeout(loadDriveURLDisplay,100)}
   if(id==='admin-screen'){updateAdminData()}
   if(id==='clients-screen'){
     const isAdmin = currentUser && currentUser.role==='admin';
@@ -2023,7 +2784,7 @@ function buildDelegationWithPlaceholders(tmpl){
       <div class="prev-field"><span class="prev-key">بطاقة رقم :</span><span class="prev-val">${id}</span></div>
       <div class="prev-field"><span class="prev-key">للعمل داخل :</span><span class="prev-val">${chain} / فرع ${branch}</span></div>
       <div class="prev-field"><span class="prev-key">في الفترة من :</span><span class="prev-val">${from} حتى ${to}</span></div>
-      <div class="prev-field"><span class="prev-key">على منتجات :</span><span class="prev-val">${products}</span></div>
+      <div class="prev-field"><span class="prev-key">المشروع :</span><span class="prev-val">${products}</span></div>
       <p class="prev-para">و الشركة مسئولة مسئولية كاملة عن كامل تصرفات المندوب داخل ${chain} مسئولية التابع لمتبوعيه، و ينتهى هذا التفويض بانتهاء المدة المحددة او باخطار رسمى كتابى يسلم لإدارة الموارد البشرية.</p>
       <p class="prev-para">وهذا تفويض منا بذلك</p>
       <div class="prev-sigs"><div class="prev-sig"><div class="prev-sig-line"></div>ختم الشركة</div><div class="prev-sig"><div class="prev-sig-line"></div>توقيع المدير المسئول</div></div></div>`,
@@ -2046,7 +2807,7 @@ function buildDelegationWithPlaceholders(tmpl){
       <div class="prev-field"><span class="prev-key">رقم البطاقة :</span><span class="prev-val">${id}</span></div>
       <div class="prev-field"><span class="prev-key">للعمل لدى :</span><span class="prev-val">${chain} (${branch})</span></div>
       <div class="prev-field"><span class="prev-key">من تاريخ :</span><span class="prev-val">${from} حتى ${to}</span></div>
-      <div class="prev-field"><span class="prev-key">على منتجات :</span><span class="prev-val">${products}</span></div>
+      <div class="prev-field"><span class="prev-key">المشروع :</span><span class="prev-val">${products}</span></div>
       <p class="prev-para">مسئولية المتبوع عن أعمال تابعيه.</p>
       <div class="prev-sigs"><div class="prev-sig"><div class="prev-sig-line"></div>المدير المسئول</div><div class="prev-sig"><div class="prev-sig-line"></div>ختم الشركة</div></div></div>`,
     othym:`<div class="delegation-preview">
@@ -2066,7 +2827,7 @@ function buildDelegationWithPlaceholders(tmpl){
       <div class="prev-field"><span class="prev-key">بطاقة رقم :</span><span class="prev-val">${id}</span></div>
       <div class="prev-field"><span class="prev-key">للعمل فرع لولو :</span><span class="prev-val">${branch}</span></div>
       <div class="prev-field"><span class="prev-key">من تاريخ :</span><span class="prev-val">${from} حتى ${to}</span></div>
-      <div class="prev-field"><span class="prev-key">منتجات :</span><span class="prev-val">${products}</span></div>
+      <div class="prev-field"><span class="prev-key">المشروع :</span><span class="prev-val">${products}</span></div>
       <p class="prev-para" style="text-align:center">لدى سيادتكم بالفرع. وهذا تفويض منا بذلك. ولكم جزيل الشكر</p>
       <div class="prev-sigs"><div class="prev-sig"><div class="prev-sig-line"></div>المدير المسئول</div></div></div>`,
     fathallah:`<div class="delegation-preview">
@@ -2087,7 +2848,7 @@ function buildDelegationWithPlaceholders(tmpl){
       <div class="prev-field"><span class="prev-key">للعمل بفرع :</span><span class="prev-val">${branch} - ${chain}</span></div>
       <div class="prev-field"><span class="prev-key">في الفترة من :</span><span class="prev-val">${from}</span></div>
       <div class="prev-field"><span class="prev-key">إلى :</span><span class="prev-val">${to}</span></div>
-      <div class="prev-field"><span class="prev-key">لمباشرة أعمال :</span><span class="prev-val">${products}</span></div>
+      <div class="prev-field"><span class="prev-key">المشروع :</span><span class="prev-val">${products}</span></div>
       <p class="prev-para" style="text-align:center">لدى سيادتكم بالفرع. وهذا تفويض منا بذلك. ولكم جزيل الشكر</p>
       <div class="prev-sigs"><div class="prev-sig"><div class="prev-sig-line"></div>المدير المسئول</div><div class="prev-sig"><div class="prev-sig-line"></div>ختم الشركة</div></div></div>`
   };
